@@ -6,7 +6,19 @@ namespace NecroServer
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var config = new Config(args);
+
+            Logger.Init(config.DiscordLog);
+            Logger.Log("LOGGER init");
+
+            var server = new Server(config);
+
+            try
+            { server.Run().Wait(); }
+            catch (Exception e)
+            { Logger.Log($"SERVER ERROR: {e.Message}", true); }
+
+            Logger.Stop();
         }
     }
 }
