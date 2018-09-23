@@ -11,7 +11,11 @@ namespace GameMath
     public struct Vector2
     {
         /// <summary>
-        /// Represents an ampty vector2
+        /// Represents a vector2(1, 1)
+        /// </summary>
+        public static readonly Vector2 One = new Vector2(1, 1);
+        /// <summary>
+        /// Represents an empty vector2
         /// </summary>
         public static readonly Vector2 Empty = new Vector2();
         /// <summary>
@@ -368,6 +372,15 @@ namespace GameMath
         public float Length()
         {
             return (float)Math.Sqrt(X * X + Y * Y);
+        }
+
+        /// <summary>
+        /// Returns the vecors square length
+        /// </summary>
+        /// <returns></returns>
+        public float SqrLength()
+        {
+            return (X * X + Y * Y);
         }
 
         /// <summary>

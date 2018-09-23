@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameMath;
 
-namespace NecroServer.Game
+namespace Game
 {
-    class PhysicalObject
+    public class PhysicalObject
     {
+        public Vector2 Position { get; set; }
+        public float Radius { get; set; }
     }
 }

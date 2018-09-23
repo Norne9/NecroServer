@@ -8,6 +8,7 @@ namespace Packets
         public float PlayTime { get; set; }
         public float ZoneSize { get; set; }
         public int AlivePlayers { get; set; }
+        public bool Cooldown { get; set; }
         public PlayerCameraInfo[] PlayerCameras { get; set; }
         public UnitInfo[] Units { get; set; }
         public RuneInfo[] Runes { get; set; }
