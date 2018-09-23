@@ -13,10 +13,10 @@ namespace Game
     {
         private readonly OcTreeNode MainNode;
 
-        public OcTree(BoundingBox gameZone, IEnumerable<T> objects, float minBoxSize = 3f)
+        public OcTree(BoundingBox gameZone, IEnumerable<T> objects, bool advanced = false, float minBoxSize = 3f)
         {
             var treeObjects = objects.Select((o) => new OcTreeObject(o)).ToList();
-            MainNode = new OcTreeNode(gameZone, treeObjects, minBoxSize);
+            MainNode = new OcTreeNode(gameZone, treeObjects, minBoxSize, advanced);
         }
 
         public bool Intersect(T obj) =>

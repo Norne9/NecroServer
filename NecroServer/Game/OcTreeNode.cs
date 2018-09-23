@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using GameMath;
+using System.Linq;
 
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
@@ -16,26 +17,13 @@ namespace Game
         public List<OcTreeObject> Objects { get; set; }
         public List<OcTreeNode> Nodes { get; set; } = new List<OcTreeNode>();
 
-        public OcTreeNode(BoundingBox box, List<OcTreeObject> objects, float minBoxSize)
+        public OcTreeNode(BoundingBox box, List<OcTreeObject> objects, float minBoxSize, bool advanced)
         {
             NodeBox = box;
             Objects = objects;
             if (NodeBox.Width <= minBoxSize && NodeBox.Height <= minBoxSize || Objects.Count <= 1) return;
 
-            BoundingBox box1, box2;
-            if (NodeBox.Width >= NodeBox.Height)
-            {
-                float halfWidth = NodeBox.Width / 2f;
-                box1 = new BoundingBox(            NodeBox.X, NodeBox.Y, halfWidth, NodeBox.Height);
-                box2 = new BoundingBox(NodeBox.X + halfWidth, NodeBox.Y, halfWidth, NodeBox.Height);
-            }
-            else
-            {
-                float halfHeight = NodeBox.Height / 2f;
-                box1 = new BoundingBox(NodeBox.X,              NodeBox.Y, NodeBox.Width, halfHeight);
-                box2 = new BoundingBox(NodeBox.X, NodeBox.Y + halfHeight, NodeBox.Width, halfHeight);
-            }
-
+            var (box1, box2) = advanced ? SplitAdvanced(NodeBox, Objects) : SplitDefault(NodeBox);
             var objs1 = new List<OcTreeObject>();
             var objs2 = new List<OcTreeObject>();
 
@@ -55,9 +43,45 @@ namespace Game
             }
 
             if (objs1.Count > 0)
-                Nodes.Add(new OcTreeNode(box1, objs1, minBoxSize));
+                Nodes.Add(new OcTreeNode(box1, objs1, minBoxSize, advanced));
             if (objs2.Count > 0)
-                Nodes.Add(new OcTreeNode(box2, objs2, minBoxSize));
+                Nodes.Add(new OcTreeNode(box2, objs2, minBoxSize, advanced));
+        }
+
+        private (BoundingBox, BoundingBox) SplitDefault(BoundingBox nodeBox)
+        {
+            BoundingBox box1, box2;
+            if (nodeBox.Width >= nodeBox.Height)
+            {
+                float halfWidth = nodeBox.Width / 2f;
+                box1 = new BoundingBox(nodeBox.X, nodeBox.Y, halfWidth, nodeBox.Height);
+                box2 = new BoundingBox(nodeBox.X + halfWidth, nodeBox.Y, halfWidth, nodeBox.Height);
+            }
+            else
+            {
+                float halfHeight = nodeBox.Height / 2f;
+                box1 = new BoundingBox(nodeBox.X, nodeBox.Y, nodeBox.Width, halfHeight);
+                box2 = new BoundingBox(nodeBox.X, nodeBox.Y + halfHeight, nodeBox.Width, halfHeight);
+            }
+            return (box1, box2);
+        }
+
+        private (BoundingBox, BoundingBox) SplitAdvanced(BoundingBox nodeBox, List<OcTreeObject> objects)
+        {
+            BoundingBox box1, box2;
+            if (nodeBox.Width >= nodeBox.Height)
+            {
+                float mid = objects.Select((o) => o.Position.X).Average();
+                box1 = new BoundingBox(nodeBox.X, nodeBox.Y, mid - nodeBox.X, nodeBox.Height);
+                box2 = new BoundingBox(mid, nodeBox.Y, nodeBox.Width - (mid - nodeBox.X), nodeBox.Height);
+            }
+            else
+            {
+                float mid = objects.Select((o) => o.Position.Y).Average();
+                box1 = new BoundingBox(nodeBox.X, nodeBox.Y, nodeBox.Width, mid - nodeBox.Y);
+                box2 = new BoundingBox(nodeBox.X, mid, nodeBox.Width, nodeBox.Height - (mid - nodeBox.Y));
+            }
+            return (box1, box2);
         }
 
         public bool Intersect(OcTreeObject obj)
