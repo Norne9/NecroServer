@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace NecroServer
+namespace Game
 {
-    class Unit
+    public class Unit : PhysicalObject
     {
     }
 }

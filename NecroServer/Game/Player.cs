@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace NecroServer
+namespace Game
 {
-    class Player
+    public class Player
     {
+
     }
 }

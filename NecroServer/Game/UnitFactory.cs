@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace NecroServer.Game
+namespace Game
 {
-    class UnitFactory
+    public static class UnitFactory
     {
+
     }
 }

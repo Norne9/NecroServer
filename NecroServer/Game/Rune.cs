@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace NecroServer.Game
+namespace Game
 {
-    class Rune
+    public class Rune : PhysicalObject
     {
     }
 }
