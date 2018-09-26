@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using Packets;
+using Game;
 
 namespace NecroServer
 {
@@ -14,15 +15,22 @@ namespace NecroServer
         private bool Work = true;
         private readonly Config Config;
         private NetSerializer NetSerializer;
+        private World World;
 
         public Server(Config config)
         {
+            Logger.Log($"SERVER creating...");
             Config = config;
             server = new NetManager(this, Config.MaxPlayers, Config.ConnectionKey)
             {
                 UpdateTime = Config.UpdateTime
             };
+            Logger.Log($"SERVER register packets");
             NetSerializer = new NetSerializer();
+            Packet.Register(NetSerializer);
+
+            World = new World(Config);
+
             Logger.Log($"SERVER created");
         }
 
@@ -34,6 +42,14 @@ namespace NecroServer
             {
                 server.PollEvents();
                 await Task.Delay(Config.UpdateTime);
+#if DEBUG
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.M)
+                        World.DebugMap();
+                }
+#endif
             }
             server.Stop();
             Logger.Log($"SERVER stopped");

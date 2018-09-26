@@ -4,6 +4,7 @@
     {
         Damage = 0,
         Haste,
-        Stealth
+        Stealth,
+        MAX
     }
 }

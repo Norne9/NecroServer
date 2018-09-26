@@ -17,7 +17,7 @@ namespace Game
 
         public static PhysicalObject MakeObstacle(float worldScale)
         {
-            var size = GameMath.MathF.RandomFloat(0, 1) > 0.5f ?
+            var size = GameMath.MathF.RandomFloat(0, 1) < 0.9f ?
                 GameMath.MathF.RandomFloat(MiniMin, MiniMax) : GameMath.MathF.RandomFloat(BigMin, BigMax);
             var pos = new Vector2(GameMath.MathF.RandomFloat(-worldScale, worldScale), GameMath.MathF.RandomFloat(-worldScale, worldScale));
             return new PhysicalObject() { Position = pos, Radius = size };

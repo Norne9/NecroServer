@@ -10,7 +10,7 @@ namespace Game
         public Vector2 Position { get; set; }
         public float Radius { get; set; }
 
-        private bool CheckIntersect(OcTree<PhysicalObject>[] trees)
+        private bool CheckIntersect(OcTree[] trees)
         {
             foreach (var tree in trees)
                 if (tree.Intersect(this))
@@ -18,7 +18,7 @@ namespace Game
             return false;
         }
 
-        public virtual void Move(Vector2 newPosition, params OcTree<PhysicalObject>[] trees)
+        public virtual void Move(Vector2 newPosition, params OcTree[] trees)
         {
             float oldX = Position.X;
             float oldY = Position.Y;
@@ -46,7 +46,7 @@ namespace Game
             Position = new Vector2(newX, newY);
         }
 
-        public virtual bool TryMove(Vector2 newPosition, params OcTree<PhysicalObject>[] trees)
+        public virtual bool TryMove(Vector2 newPosition, params OcTree[] trees)
         {
             var oldPos = Position;
             Position = newPosition;

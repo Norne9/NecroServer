@@ -9,23 +9,23 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace Game
 {
-    public class OcTree<T> where T : PhysicalObject
+    public class OcTree : PhysicalObject
     {
         private readonly OcTreeNode MainNode;
 
-        public OcTree(BoundingBox gameZone, IEnumerable<T> objects, bool advanced = false, float minBoxSize = 3f)
+        public OcTree(BoundingBox gameZone, IEnumerable<PhysicalObject> objects, bool advanced = false, float minBoxSize = 3f)
         {
             var treeObjects = objects.Select((o) => new OcTreeObject(o)).ToList();
             MainNode = new OcTreeNode(gameZone, treeObjects, minBoxSize, advanced);
         }
 
-        public bool Intersect(T obj) =>
+        public bool Intersect(PhysicalObject obj) =>
             MainNode.Intersect(new OcTreeObject(obj));
 
         public bool Intersect(Vector2 pos, float rad) =>
             MainNode.Intersect(new OcTreeObject(new PhysicalObject() { Position = pos, Radius = rad }));
 
-        public List<T> Overlap(Vector2 pos, float rad)
+        public List<T> Overlap<T>(Vector2 pos, float rad) where T : PhysicalObject
         {
             var result = new List<OcTreeObject>();
             var obj = new OcTreeObject(new PhysicalObject() { Position = pos, Radius = rad });
