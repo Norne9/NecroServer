@@ -111,34 +111,34 @@ namespace Game
 
 
         #region Visual
-        private void DrawRect(Image<Rgba32> image, BoundingBox mainRect, BoundingBox rect, Rgba32 color)
+        private void DrawRect(IImageProcessingContext<Rgba32> image, int iwidth, int iheight, BoundingBox mainRect, BoundingBox rect, Rgba32 color)
         {
             
-            var top = (rect.Y - mainRect.Y) / mainRect.Height * image.Height;
-            var height = rect.Height / mainRect.Height * image.Height;
+            var top = (rect.Y - mainRect.Y) / mainRect.Height * iheight;
+            var height = rect.Height / mainRect.Height * iheight;
 
-            var left = (rect.X - mainRect.X) / mainRect.Width * image.Width;
-            var width = rect.Width / mainRect.Width * image.Width;
+            var left = (rect.X - mainRect.X) / mainRect.Width * iwidth;
+            var width = rect.Width / mainRect.Width * iwidth;
 
             var right = left + width;
             var bottom = top + height;
 
-            image.Mutate(x => x.DrawPolygon(color, 2f, new PointF[] {
+            image.DrawPolygon(color, 2f, new PointF[] {
                         new PointF(left, top),
                         new PointF(right, top),
                         new PointF(right, bottom),
                         new PointF(left, bottom),
-            }));
+            });
         }
-        public void DrawNode(Image<Rgba32> image, BoundingBox rect)
+        public void DrawNode(IImageProcessingContext<Rgba32> image, int width, int height, BoundingBox rect)
         {
-            DrawRect(image, rect, NodeBox, Rgba32.Green);
+            DrawRect(image, width, height, rect, NodeBox, Rgba32.Green);
 
             foreach (var item in Objects)
-                DrawRect(image, rect, item.Box, Rgba32.Red);
+                DrawRect(image, width, height, rect, item.Box, Rgba32.Red);
 
             foreach (var node in Nodes)
-                node.DrawNode(image, rect);
+                node.DrawNode(image, width, height, rect);
         }
         #endregion
     }

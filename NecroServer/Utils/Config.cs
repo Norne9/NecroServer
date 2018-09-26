@@ -8,6 +8,7 @@ namespace NecroServer
     {
         public int Port { get; set; } = 15364;
 
+        public int MaxUnitCount { get; set; } = 16;
         public int MaxPlayers { get; set; } = 20;
         public int UpdateTime { get; set; } = 10;
 
@@ -20,6 +21,8 @@ namespace NecroServer
 
         public int MaxWorldScale { get; set; } = 200;
         public int MinWorldScale { get; set; } = 140;
+
+        public float RuneTime { get; set; } = 20f;
 
         public Config(string[] args)
         {

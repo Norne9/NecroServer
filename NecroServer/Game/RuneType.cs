@@ -1,8 +1,9 @@
-﻿namespace Packets
+﻿namespace Game
 {
     public enum RuneType : byte
     {
-        Damage = 0,
+        None = 0,
+        Damage,
         Haste,
         Stealth,
         MAX

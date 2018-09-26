@@ -1,34 +1,19 @@
-﻿using System;
+﻿using GameMath;
+using NecroServer;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using GameMath;
-using NecroServer;
 
 namespace Game
 {
-    public class World
+    public partial class World
     {
-        private Dictionary<long, Player> Players;
-
-        private readonly PhysicalObject[] Obstacles;
-        private readonly Unit[] Units;
-        private readonly List<Rune> Runes = new List<Rune>();
-
-        private readonly OcTree ObstaclesTree;
-        private OcTree UnitsTree;
-        private OcTree RunesTree;
-
-        private readonly float WorldScale;
-        private readonly BoundingBox WorldZone;
-        private readonly int MapType;
-
-        private readonly Config Config;
-
         public World(Config config)
         {
             Config = config;
 
             Logger.Log("WORLD creating world");
+            MapType = GameMath.MathF.RandomInt(0, 100);
             WorldScale = GameMath.MathF.RandomInt(config.MinWorldScale, config.MaxWorldScale);
             WorldZone = new BoundingBox(-WorldScale, -WorldScale, WorldScale * 2, WorldScale * 2);
 
@@ -70,10 +55,11 @@ namespace Game
         private Unit[] GenerateUnits(int count)
         {
             var objs = new List<Unit>();
+            var factory = new UnitFactory(Config);
             for (int i = 0; i < count; i++)
             {
                 var tree = new OcTree(new BoundingBox(-200, -200, 400, 400), objs, false);
-                var obj = UnitFactory.MakeUnit();
+                var obj = factory.MakeUnit();
                 Vector2 pos;
                 do
                 {
@@ -92,26 +78,13 @@ namespace Game
                 var tree = new OcTree(new BoundingBox(-200, -200, 400, 400), objs, false);
                 var obj = RuneFactory.MakeRune();
                 Vector2 pos;
-                do {
+                do
+                {
                     pos = new Vector2(GameMath.MathF.RandomFloat(-WorldScale, WorldScale), GameMath.MathF.RandomFloat(-WorldScale, WorldScale));
                 } while (!obj.TryMove(pos, tree, ObstaclesTree, UnitsTree));
                 objs.Add(obj);
             }
             return objs;
-        }
-
-        public void DebugMap()
-        {
-            const int drawRes = 2048;
-
-            Logger.Log("DEBUG drawing trees");
-            Logger.Log($"DEBUG drawing {nameof(ObstaclesTree)}");
-            ObstaclesTree.DrawTree(drawRes, $"{nameof(ObstaclesTree)}.png");
-            Logger.Log($"DEBUG drawing {nameof(UnitsTree)}");
-            UnitsTree.DrawTree(drawRes, $"{nameof(UnitsTree)}.png");
-            Logger.Log($"DEBUG drawing {nameof(RunesTree)}");
-            RunesTree.DrawTree(drawRes, $"{nameof(RunesTree)}.png");
-            Logger.Log("DEBUG drawing finished");
         }
     }
 }

@@ -48,11 +48,19 @@ namespace NecroServer
                     var key = Console.ReadKey(true);
                     if (key.Key == ConsoleKey.M)
                         World.DebugMap();
+                    if (key.Key == ConsoleKey.Q)
+                        Stop("stopped by console");
                 }
 #endif
             }
             server.Stop();
             Logger.Log($"SERVER stopped");
+        }
+
+        public void Stop(string reason)
+        {
+            Work = false;
+            Logger.Log($"SERVER stop command '{reason}'");
         }
 
 

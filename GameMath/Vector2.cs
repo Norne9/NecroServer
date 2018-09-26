@@ -440,6 +440,15 @@ namespace GameMath
         }
 
         /// <summary>
+        /// Return normalized vector
+        /// </summary>
+        /// <returns>normalized vector</returns>
+        public Vector2 Normalize()
+        {
+            return Clone() / Length();
+        }
+
+        /// <summary>
         /// Implements the operator +.
         /// </summary>
         /// <param name="left">The left.</param>

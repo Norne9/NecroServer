@@ -38,7 +38,7 @@ namespace Game
         {
             using (Image<Rgba32> image = new Image<Rgba32>(res, res))
             {
-                MainNode.DrawNode(image, MainNode.NodeBox);
+                image.Mutate((x) => MainNode.DrawNode(x, res, res, MainNode.NodeBox));
                 image.Save(file);
             }
         }
