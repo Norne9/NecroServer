@@ -44,9 +44,14 @@ namespace Game
                 PhysicalObject obj;
                 do
                 {
-                    obj = ObstacleFactory.MakeObstacle(WorldScale);
+                    obj = ObstacleFactory.MakeObstacle();
+
+                    obj.Position = GetPointInCircle(WorldScale * Config.ObstacleRange);
+                    if (GameMath.MathF.Abs(obj.Position.X) > WorldScale) continue;
+                    if (GameMath.MathF.Abs(obj.Position.Y) > WorldScale) continue;
+
                     tree = new OcTree(new BoundingBox(-200, -200, 400, 400), objs, false);
-                } while (tree.Intersect(obj.Position, obj.Radius + ObstacleFactory.SpaceBetween));
+                } while (tree == null || tree.Intersect(obj.Position, obj.Radius + ObstacleFactory.SpaceBetween));
                 objs.Add(obj);
             }
             return objs.ToArray();
@@ -63,7 +68,7 @@ namespace Game
                 Vector2 pos;
                 do
                 {
-                    pos = new Vector2(GameMath.MathF.RandomFloat(-WorldScale, WorldScale), GameMath.MathF.RandomFloat(-WorldScale, WorldScale));
+                    pos = GetPointInCircle(WorldScale * Config.UnitRange);
                 } while (!obj.TryMove(pos, tree, ObstaclesTree));
                 objs.Add(obj);
             }
@@ -80,11 +85,22 @@ namespace Game
                 Vector2 pos;
                 do
                 {
-                    pos = new Vector2(GameMath.MathF.RandomFloat(-WorldScale, WorldScale), GameMath.MathF.RandomFloat(-WorldScale, WorldScale));
+                    pos = GetPointInCircle(WorldScale * Config.RuneRange);
                 } while (!obj.TryMove(pos, tree, ObstaclesTree, UnitsTree));
                 objs.Add(obj);
             }
             return objs;
+        }
+
+        private Vector2 GetPointInCircle(float Radius)
+        {
+            float sRad = Radius * Radius;
+            while (true)
+            {
+                var pos = new Vector2(GameMath.MathF.RandomFloat(-Radius, Radius), GameMath.MathF.RandomFloat(-Radius, Radius));
+                if (pos.SqrLength() < sRad)
+                    return pos;
+            }
         }
     }
 }

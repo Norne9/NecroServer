@@ -24,6 +24,10 @@ namespace NecroServer
 
         public float RuneTime { get; set; } = 20f;
 
+        public float UnitRange { get; set; } = 0.95f;
+        public float ObstacleRange { get; set; } = 1.1f;
+        public float RuneRange { get; set; } = 0.5f;
+
         public Config(string[] args)
         {
 

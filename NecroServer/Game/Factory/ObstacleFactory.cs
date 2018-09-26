@@ -15,12 +15,11 @@ namespace Game
         const float BigMin = 3.0f;
         const float BigMax = 6.0f;
 
-        public static PhysicalObject MakeObstacle(float worldScale)
+        public static PhysicalObject MakeObstacle()
         {
             var size = GameMath.MathF.RandomFloat(0, 1) < 0.9f ?
                 GameMath.MathF.RandomFloat(MiniMin, MiniMax) : GameMath.MathF.RandomFloat(BigMin, BigMax);
-            var pos = new Vector2(GameMath.MathF.RandomFloat(-worldScale, worldScale), GameMath.MathF.RandomFloat(-worldScale, worldScale));
-            return new PhysicalObject() { Position = pos, Radius = size };
+            return new PhysicalObject() { Radius = size };
         }
     }
 }

@@ -22,7 +22,9 @@ namespace NecroServer
             catch (Exception e)
             { Logger.Log($"SERVER ERROR: {e.Message}", true); }
 
+            System.Threading.Thread.Sleep(3000);
             Logger.Stop();
+            System.Threading.Thread.Sleep(2000);
         }
     }
 }
