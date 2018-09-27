@@ -4,6 +4,7 @@ using System.Text;
 using GameMath;
 using NecroServer;
 using System.Linq;
+using Packets;
 
 namespace Game
 {
@@ -24,7 +25,9 @@ namespace Game
         public Player Owner { get; private set; } = null;
         public bool Attack { get; private set; } = false;
 
-        private Vector2 lookDirection = Vector2.One;
+        private Vector2 lastPosition = Vector2.Empty;
+        private Vector2 lastDir = Vector2.Empty;
+        private float Rotation = 0f;
 
         private DateTime lastAttack = DateTime.Now;
 
@@ -50,13 +53,27 @@ namespace Game
             proto.UnitMesh, proto.MaxHealth, proto.MoveSpeed, proto.AttackDelay, proto.ViewRadius, proto.AttackRange, proto.Damage)
         { }
 
+        public UnitInfo GetUnitInfo(World world, Player player) =>
+            new UnitInfo()
+            {
+                UnitId = UnitId,
+                UnitMesh = UnitMesh,
+                PosX = (short)(Position.X / world.WorldScale * short.MaxValue),
+                PosY = (short)(Position.Y / world.WorldScale * short.MaxValue),
+                Rot = (byte)((Rotation > 0 ? Rotation : Rotation + GameMath.MathF.PI * 2f) / GameMath.MathF.PI / 2f * byte.MaxValue),
+                Health = (byte)(Health / MaxHealth * byte.MaxValue),
+                Rune = Owner?.UnitsRune ?? RuneType.None,
+                Attack = Attack,
+                PlayerOwned = Owner == player
+            };
+
         public void Update(World world, Vector2 cmdPos, bool cmdAttack)
         {
             if (!IsAlive) return;
 
             var (damage, speed) = ApplyRune();
 
-            lookDirection = (cmdPos - Position); //Default look direction
+            var lookDirection = CalcLook(); //Default look direction
             Attack = false; //Reset attack
 
             if (cmdAttack) //Find target and attack or stay calm
@@ -74,7 +91,10 @@ namespace Game
                     {
                         Attack = true; //Play attack animation
                         if ((DateTime.Now - lastAttack).TotalSeconds > AttackDelay) //Is it time to attack?
+                        {
+                            lastAttack = DateTime.Now;
                             target.TakeDamage(this, damage);
+                        }
                     }
                 }
                 else //No target - Just move
@@ -87,6 +107,22 @@ namespace Game
             var rune = world.TakeRune(this);
             if (rune != RuneType.None)
                 Owner.SetRune(rune);
+
+            //Apply damage from zone
+            if (Position.SqrLength() > world.ZoneRadius * world.ZoneRadius)
+                TakeDamage(null, Config.ZoneDps * world.DeltaTime);
+
+            //Calculate rotation
+            Rotation = System.MathF.Atan2(lookDirection.Y, lookDirection.X);
+        }
+
+        private Vector2 CalcLook()
+        {
+            var dir = lastPosition - Position;
+            if (dir.SqrLength() > 0f)
+                lastDir = dir;
+            lastPosition = Position;
+            return lastDir;
         }
 
         private (float dmg, float spd) ApplyRune()
@@ -116,25 +152,48 @@ namespace Game
 
         public void Rise(Player player)
         {
-            if (player.Units.Count >= Config.MaxUnitCount)
+            if (Owner != null || player.Units.Count >= Config.MaxUnitCount)
                 return;
 
             Logger.Log($"GAME player '{player.Name}' rised unit {UnitId}");
             Health = MaxHealth;
             Owner = player;
             player.Units.Add(this);
+
+            player.PlayerStatus.UnitRise++;
+        }
+
+        public void Heal()
+        {
+            if (Health < MaxHealth)
+                Health += MaxHealth * Config.HealValue;
+            if (Health > MaxHealth)
+                Health = MaxHealth;
         }
 
         public void TakeDamage(Unit damager, float damage)
         {
             if (!IsAlive) return;
-            damage = GameMath.MathF.RandomFloat(0.9f, 1.1f);
+            damage = GameMath.MathF.RandomFloat(1f - Config.RandomDamage / 2f, 1f + Config.RandomDamage / 2f);
             Health -= damage;
+
+            if (damager?.Owner != null)
+                damager.Owner.PlayerStatus.DamageDeal += damage;
+
+            if (Owner != null)
+                Owner.PlayerStatus.DamageReceive += damage;
+
             if (!IsAlive)
             {
-                Logger.Log($"GAME unit {damager.UnitId}@{damager.Owner?.Name ?? "null"} killed {UnitId}@{Owner?.Name ?? "null"}");
+                if (damager == null)
+                    Logger.Log($"GAME unit {UnitId}@{Owner?.Name ?? "null"} killed by zone");
+                else
+                    Logger.Log($"GAME unit {damager.UnitId}@{damager.Owner?.Name ?? "null"} killed {UnitId}@{Owner?.Name ?? "null"}");
                 Owner?.Units.Remove(this);
                 Owner = null;
+
+                if (damager?.Owner != null)
+                    damager.Owner.PlayerStatus.UnitKill++;
             }
         }
     }

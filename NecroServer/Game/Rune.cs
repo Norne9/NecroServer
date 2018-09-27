@@ -8,5 +8,8 @@ namespace Game
     public class Rune : PhysicalObject
     {
         public RuneType RuneType { get; set; }
+
+        public RuneInfo GetRuneInfo() =>
+            new RuneInfo() { PosX = Position.X, PosY = Position.Y, Rune = RuneType };
     }
 }

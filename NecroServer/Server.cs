@@ -15,6 +15,7 @@ namespace NecroServer
         private bool Work = true;
         private readonly Config Config;
         private NetSerializer NetSerializer;
+        
         private World World;
 
         public Server(Config config)
@@ -30,6 +31,7 @@ namespace NecroServer
             Packet.Register(NetSerializer);
 
             World = new World(Config);
+            World.OnGameEnd += Stop;
 
             Logger.Log($"SERVER created");
         }

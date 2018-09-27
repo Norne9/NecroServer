@@ -9,6 +9,8 @@ namespace Game
 {
     public partial class World
     {
+        public event Action<string> OnGameEnd;
+
         private Dictionary<long, Player> Players;
 
         private readonly PhysicalObject[] Obstacles;
@@ -19,7 +21,7 @@ namespace Game
         private OcTree UnitsTree;
         private OcTree RunesTree;
 
-        private readonly float WorldScale;
+        public readonly float WorldScale;
         private readonly BoundingBox WorldZone;
         private readonly int MapType;
 
@@ -27,5 +29,13 @@ namespace Game
 
         private Stopwatch DtTimer = new Stopwatch();
         public float DeltaTime { get; private set; } = 0f;
+
+        public float ZoneRadius { get; private set; }
+        private WorldState WorldState = WorldState.Static;
+        private DateTime StartTime = DateTime.Now;
+
+        //for clients
+        private int AlivePlayers = 0;
+        private float TimeToEnd = 0f;
     }
 }

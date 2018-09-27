@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using GameMath;
+using Packets;
 
 namespace Game
 {
@@ -56,5 +57,8 @@ namespace Game
                 return true;
             return false;
         }
+
+        public ObstacleInfo GetObstacleInfo() =>
+            new ObstacleInfo() { PosX = Position.X, PosY = Position.Y, Scale = Radius };
     }
 }
