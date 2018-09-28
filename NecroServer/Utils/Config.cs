@@ -10,7 +10,10 @@ namespace NecroServer
 
         public int MaxUnitCount { get; set; } = 16;
         public int MaxPlayers { get; set; } = 20;
-        public int UpdateTime { get; set; } = 10;
+        public int UpdateTime { get; set; } = 30;
+
+        public float PlayerWaitTime { get; set; } = 45f;
+        public float EndWaitTime { get; set; } = 15f;
 
         public string DiscordLog { get; set; } = null;
         public string ConnectionKey { get; set; } = "debug";
@@ -43,6 +46,11 @@ namespace NecroServer
         public float ResizeTime { get; set; } = 160f;
 
         public Config(string[] args)
+        {
+
+        }
+
+        public void AppendArgs(string[] args)
         {
 
         }

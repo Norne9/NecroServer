@@ -11,12 +11,33 @@ namespace Game
 {
     public partial class World
     {
-        public void SetInput(long NetworkId, ClientInput input)
+        public void RemovePlayer(long networkId)
         {
-            if (Players.ContainsKey(NetworkId))
-                Players[NetworkId].SetInput(new Vector2(input.MoveX, input.MoveY), input.Rise);
+            if (Players.ContainsKey(networkId))
+            {
+                var player = Players[networkId];
+                if (player.IsAlive)
+                {
+                    Logger.Log($"GAME remove player '{player.Name}'");
+                    foreach (var unit in player.Units)
+                        unit.TakeDamage(null, unit.MaxHealth * 2f);
+                }
+                Players.Remove(networkId);
+            }
+        }
+
+        public bool SetInput(long networkId, ClientInput input)
+        {
+            if (Players.ContainsKey(networkId))
+            {
+                Players[networkId].SetInput(new Vector2(input.MoveX, input.MoveY), input.Rise);
+                return true;
+            }
             else
-                Logger.Log($"SERVER unknown network id {NetworkId}");
+            {
+                Logger.Log($"SERVER unknown network id {networkId}");
+                return false;
+            }
         }
 
         public ServerFrame GetServerFrame(Player player)
@@ -55,6 +76,15 @@ namespace Game
                 DamageReceive = player.PlayerStatus.DamageReceive,
                 UnitRise = player.PlayerStatus.UnitRise,
                 UnitKill = player.PlayerStatus.UnitKill
+            };
+
+        public ServerMap GetServerMap() =>
+            new ServerMap()
+            {
+                Scale = WorldScale,
+                Obstacles = Obstacles.Select((o) => o.GetObstacleInfo()).ToArray(),
+                MaxPlayers = Config.MaxPlayers,
+                MapType = MapType
             };
     }
 }

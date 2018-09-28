@@ -111,6 +111,9 @@ namespace Game
             //Apply damage from zone
             if (Position.SqrLength() > world.ZoneRadius * world.ZoneRadius)
                 TakeDamage(null, Config.ZoneDps * world.DeltaTime);
+            //Instakil outside world
+            if (Position.SqrLength() > world.WorldScale * world.WorldScale)
+                TakeDamage(null, MaxHealth * 2f);
 
             //Calculate rotation
             Rotation = System.MathF.Atan2(lookDirection.Y, lookDirection.X);

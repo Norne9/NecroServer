@@ -9,7 +9,7 @@ namespace Game
 {
     public partial class World
     {
-        public event Action<string> OnGameEnd;
+        public event Action OnGameEnd;
 
         private Dictionary<long, Player> Players;
 

@@ -59,7 +59,6 @@ namespace Game
             {
                 foreach (var unit in Units)
                     unit.TakeDamage(null, unit.MaxHealth * 2f);
-                AlivePlayers = 0;
             }
 
             //Update players
@@ -67,12 +66,16 @@ namespace Game
             {
                 player.Update(this);
                 if (!player.IsAlive && player.PlayerStatus.Place == 0)
-                    player.PlayerStatus.Place = AlivePlayers + 1;
+                {
+                    player.PlayerStatus.Place = AlivePlayers > 0 ? AlivePlayers : 1;
+                    Logger.Log($"GAME player dead {player.PlayerStatus.Place}/{Config.MaxPlayers}");
+                }
             }
 
+            // TODO: Add real players check
             //No more players - end game
             if (AlivePlayers == 0)
-                OnGameEnd?.Invoke("game finished");
+                OnGameEnd?.Invoke();
 
             //Zone processing
             switch (WorldState)
