@@ -127,7 +127,7 @@ namespace Game
                 float y = positions[i].Y;
                 x = x * cs - y * sn;
                 y = x * sn + y * cs;
-                positions[i] = new Vector2(x, y);
+                positions[i] = AvgPosition + new Vector2(x, y);
                 if (move) positions[i] += dir;
             }
         }

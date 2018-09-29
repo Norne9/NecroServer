@@ -91,7 +91,7 @@ namespace NecroServer
             {
                 if (Peers.ContainsKey(netId))
                     Peers[netId].Send(data, SendOptions.ReliableUnordered);
-                else
+                else if (netId >= 0)
                     Logger.Log($"SERVER unknown peer {netId}");
             }
         }
@@ -114,6 +114,7 @@ namespace NecroServer
             World.StartGame(Players);
             ServerState = ServerState.Playing;
             startTime = DateTime.Now;
+            SendPlayersInfo();
         }
 
         public async Task Run()
