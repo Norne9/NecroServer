@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameMath", "GameMath\GameMa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MasterReqResp", "MasterReqResp\MasterReqResp.csproj", "{1B1F4C69-E978-4304-8631-99718E7CA373}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NecroMaster", "NecroMaster\NecroMaster.csproj", "{A505E534-B05B-4ED8-A7EB-493079578EB9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MasterServer", "MasterServer\MasterServer.csproj", "{EE028A56-F0D9-4233-81FF-FD10C2EC4EE9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,10 @@ Global
 		{1B1F4C69-E978-4304-8631-99718E7CA373}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B1F4C69-E978-4304-8631-99718E7CA373}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B1F4C69-E978-4304-8631-99718E7CA373}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A505E534-B05B-4ED8-A7EB-493079578EB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A505E534-B05B-4ED8-A7EB-493079578EB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A505E534-B05B-4ED8-A7EB-493079578EB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A505E534-B05B-4ED8-A7EB-493079578EB9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE028A56-F0D9-4233-81FF-FD10C2EC4EE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE028A56-F0D9-4233-81FF-FD10C2EC4EE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE028A56-F0D9-4233-81FF-FD10C2EC4EE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE028A56-F0D9-4233-81FF-FD10C2EC4EE9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

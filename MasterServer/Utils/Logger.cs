@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
 
-namespace NecroMaster
+namespace MasterServer
 {
     public class Logger : IDisposable
     {
@@ -58,6 +58,7 @@ namespace NecroMaster
                         var col = Console.ForegroundColor;
                         Console.ForegroundColor = msg.IsCritical ? ConsoleColor.DarkRed : col;
                         Console.WriteLine($"{(msg.IsCritical ? "!" : " ")}[{msg.Time.ToString("dd.MM.yyyy HH:mm:ss.fff")}]\t{msg.Text}");
+                        Console.ForegroundColor = col;
                         await DiscordSend(msg.Time, msg.Text, msg.IsCritical);
                     }
                     catch (Exception) { }

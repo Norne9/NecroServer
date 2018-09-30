@@ -58,6 +58,7 @@ namespace NecroServer
                         var col = Console.ForegroundColor;
                         Console.ForegroundColor = msg.IsCritical ? ConsoleColor.DarkRed : col;
                         Console.WriteLine($"{(msg.IsCritical ? "!" : " ")}[{msg.Time.ToString("dd.MM.yyyy HH:mm:ss.fff")}]\t{msg.Text}");
+                        Console.ForegroundColor = col;
                         await DiscordSend(msg.Time, msg.Text, msg.IsCritical);
                     }
                     catch (Exception) { }

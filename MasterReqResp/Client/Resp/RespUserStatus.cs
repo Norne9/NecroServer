@@ -12,11 +12,11 @@ namespace MasterReqResp
         public int GameCount { get; set; } = 0;
 
         public float AvgAliveTime { get; set; } = 0;
-        public int AvgPlace { get; set; } = 0;
+        public float AvgPlace { get; set; } = 0;
         public float AvgDamageDeal { get; set; } = 0;
         public float AvgDamageReceive { get; set; } = 0;
-        public int AvgUnitRise { get; set; } = 0;
-        public int AvgUnitKill { get; set; } = 0;
+        public float AvgUnitRise { get; set; } = 0;
+        public float AvgUnitKill { get; set; } = 0;
 
         public float TotalAliveTime { get; set; } = 0;
         public float TotalDamageDeal { get; set; } = 0;

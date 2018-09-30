@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using MasterReqResp;
 using System.Linq;
+using System.IO;
 
-namespace NecroMaster
+namespace MasterServer
 {
     public class User
     {
@@ -13,6 +14,7 @@ namespace NecroMaster
         public long UserId { get; set; } = 0;
         public string UserKey { get; set; } = "";
         public string UserName { get; set; } = "";
+        public bool DoubleUnits { get; set; } = false;
 
         public DateTime LastGame { get; set; } = DateTime.Now.AddYears(-1);
 
@@ -36,9 +38,71 @@ namespace NecroMaster
         public int TotalUnitRise { get; set; } = 0;
         public int TotalUnitKill { get; set; } = 0;
 
-        public User(byte[] data)
+        public User(Stream data)
         {
+            using (var br = new BinaryReader(data))
+            {
+                UserId = br.ReadInt64();
+                UserKey = br.ReadString();
+                UserName = br.ReadString();
+                DoubleUnits = br.ReadBoolean();
 
+                LastGame = new DateTime(br.ReadInt64());
+
+                int count = br.ReadInt32();
+                for (int i = 0; i < count; i++)
+                    GamePlaces.Enqueue(br.ReadInt32());
+
+                WinCount = br.ReadInt32();
+                GameCount = br.ReadInt32();
+
+                AvgAliveTime = br.ReadDouble();
+                AvgPlace = br.ReadDouble();
+                AvgDamageDeal = br.ReadDouble();
+                AvgDamageReceive = br.ReadDouble();
+                AvgUnitRise = br.ReadDouble();
+                AvgUnitKill = br.ReadDouble();
+
+                TotalAliveTime = br.ReadDouble();
+                TotalDamageDeal = br.ReadDouble();
+                TotalDamageReceive = br.ReadDouble();
+                TotalUnitRise = br.ReadInt32();
+                TotalUnitKill = br.ReadInt32();
+            }
+            WorldPlace = 0;
+            Rating = GamePlaces.Select((p) => GetScore(p)).Sum();
+        }
+        public void SaveUser(Stream stream)
+        {
+            using (var bw = new BinaryWriter(stream))
+            {
+                bw.Write(UserId);
+                bw.Write(UserKey);
+                bw.Write(UserName);
+                bw.Write(DoubleUnits);
+
+                bw.Write(LastGame.Ticks);
+
+                bw.Write(GamePlaces.Count);
+                foreach (var place in GamePlaces)
+                    bw.Write(place);
+
+                bw.Write(WinCount);
+                bw.Write(GameCount);
+
+                bw.Write(AvgAliveTime);
+                bw.Write(AvgPlace);
+                bw.Write(AvgDamageDeal);
+                bw.Write(AvgDamageReceive);
+                bw.Write(AvgUnitRise);
+                bw.Write(AvgUnitKill);
+
+                bw.Write(TotalAliveTime);
+                bw.Write(TotalDamageDeal);
+                bw.Write(TotalDamageReceive);
+                bw.Write(TotalUnitRise);
+                bw.Write(TotalUnitKill);
+            }
         }
 
         public User(UserBase uBase, string name)
