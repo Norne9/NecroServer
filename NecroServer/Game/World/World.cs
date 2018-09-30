@@ -10,6 +10,7 @@ namespace Game
     public partial class World
     {
         public event Action OnGameEnd;
+        public event Action<long, PlayerStatus> OnPlayerDead;
 
         private Dictionary<long, Player> Players;
 

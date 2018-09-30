@@ -10,13 +10,16 @@ namespace NecroServer
 
         public int MaxUnitCount { get; set; } = 16;
         public int MaxPlayers { get; set; } = 20;
-        public int UpdateTime { get; set; } = 30;
+        public int UpdateDelay { get; set; } = 30;
 
         public float PlayerWaitTime { get; set; } = 45f;
         public float EndWaitTime { get; set; } = 15f;
 
         public string DiscordLog { get; set; } = null;
         public string ConnectionKey { get; set; } = "debug";
+
+        public string MasterServer { get; set; } = "http://127.0.0.1:8856/";
+        public int MasterUpdateDelay { get; set; } = 2000;
 
         public int UnitCount { get; set; } = 300;
         public int RuneCount { get; set; } = 8;

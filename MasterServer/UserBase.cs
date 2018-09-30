@@ -73,7 +73,7 @@ namespace MasterServer
         {
             var user = GetUser(status.UserId);
             if (user == null) //Unknown user
-                return new RespStatus() { Rating = 0, UserId = status.UserId };
+                return new RespStatus();
 
             user.UpdateUser(status);
             if (!Users.ContainsKey(user.UserId))

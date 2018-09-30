@@ -68,6 +68,7 @@ namespace Game
                 if (!player.IsAlive && player.PlayerStatus.Place == 0)
                 {
                     player.PlayerStatus.Place = AlivePlayers > 0 ? AlivePlayers : 1;
+                    if (!player.IsAI) OnPlayerDead?.Invoke(player.UserId, player.PlayerStatus);
                     Logger.Log($"GAME player dead {player.PlayerStatus.Place}/{Config.MaxPlayers}");
                 }
             }

@@ -65,11 +65,10 @@ namespace MasterServer
 
         public void DebugServers()
         {
-            var onlinePlayers = Servers.Select((s) => s.ConnectedPlayers).Sum();
-            var maxPlayers = Servers.Where((s) => (DateTime.Now - s.LastData).TotalSeconds > Config.ServerTime)
-                .Select((s) => s.TotalPlayers).Sum();
+            var allServers = Servers.Where((s) => (DateTime.Now - s.LastData).TotalSeconds < Config.ServerTime);
+            var onlinePlayers = allServers.Select((s) => s.ConnectedPlayers).Sum();
+            var maxPlayers = allServers.Select((s) => s.TotalPlayers).Sum();
             Logger.Log($"DEBUG players {onlinePlayers}/{maxPlayers}");
-            var allServers = Servers.Where((s) => (DateTime.Now - s.LastData).TotalSeconds > Config.ServerTime);
             var playServers = allServers.Where((s) => !s.InLobby).Count();
             Logger.Log($"DEBUG count {playServers}/{allServers.Count()}");
         }

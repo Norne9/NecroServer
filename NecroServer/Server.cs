@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace NecroServer
         private readonly NetManager server;
         private bool Work = true;
         private readonly Config Config;
+        private readonly MasterClient MasterClient;
         private NetSerializer NetSerializer;
         
         private World World;
@@ -24,13 +26,16 @@ namespace NecroServer
         private ServerState ServerState = ServerState.Started;
         private DateTime startTime = DateTime.Now;
 
-        public Server(Config config)
+        private ConcurrentQueue<Func<Task>> RequestQueue = new ConcurrentQueue<Func<Task>>();
+
+        public Server(Config config, MasterClient masterClient)
         {
             Logger.Log($"SERVER creating...");
+            MasterClient = masterClient;
             Config = config;
             server = new NetManager(this, Config.MaxPlayers, Config.ConnectionKey)
             {
-                UpdateTime = Config.UpdateTime
+                UpdateTime = Config.UpdateDelay
             };
 
             Logger.Log($"SERVER register packets");
@@ -41,11 +46,12 @@ namespace NecroServer
 
             World = new World(Config);
             World.OnGameEnd += World_OnGameEnd;
+            World.OnPlayerDead += World_OnPlayerDead;
 
             Logger.Log($"SERVER created");
         }
 
-        private void OnClientConnection(ClientConnection clientConnection, NetPeer peer)
+        private async void OnClientConnection(ClientConnection clientConnection, NetPeer peer)
         {
             if (ServerState == ServerState.Playing || ServerState == ServerState.EndGame)
             {
@@ -54,9 +60,7 @@ namespace NecroServer
                 return;
             }
 
-            var clientDataTask = MasterClient.MasterClient.CheckClient(clientConnection.UserId, clientConnection.UserKey);
-            clientDataTask.Wait();
-            var clientData = clientDataTask.Result;
+            var clientData = await MasterClient.RequestClientInfo(clientConnection.UserId, clientConnection.UserKey);
 
             if (!clientData.Valid)
             {
@@ -65,7 +69,7 @@ namespace NecroServer
                 return;
             }
 
-            var player = new Player(clientData.UsedId, peer.ConnectId, clientData.Name, clientData.DoubleUnits, Config);
+            var player = new Player(clientData.UserId, peer.ConnectId, clientData.Name, clientData.DoubleUnits, Config);
             Players.Add(peer.ConnectId, player);
             if (Players.Count == 1)
             {
@@ -109,6 +113,20 @@ namespace NecroServer
             startTime = DateTime.Now;
         }
 
+        private void World_OnPlayerDead(long userId, PlayerStatus status)
+        {
+            RequestQueue.Enqueue(async () =>
+            {
+                var stat = status;
+                var id = userId;
+
+                var result = await MasterClient.SendStatus(stat, id);
+                if (result.UserId != id)
+                    Logger.Log($"MASTER failed send player #{id} status");
+                status.Rating = result.Rating;
+            });
+        }
+
         private void StartGame()
         {
             World.StartGame(Players);
@@ -120,6 +138,7 @@ namespace NecroServer
         public async Task Run()
         {
             server.Start(Config.Port);
+            _ = Task.Run(() => MasterUpdate());
             Logger.Log($"SERVER started on port {Config.Port}");
             while (Work)
             {
@@ -163,7 +182,7 @@ namespace NecroServer
                 }
 
                 //Wait
-                await Task.Delay(Config.UpdateTime);
+                await Task.Delay(Config.UpdateDelay);
 
                 //Console commands
                 if (Console.KeyAvailable)
@@ -196,6 +215,16 @@ namespace NecroServer
             Logger.Log($"SERVER stop command '{reason}'");
         }
 
+        public async Task MasterUpdate()
+        {
+            while (Work)
+            {
+                while (RequestQueue.TryDequeue(out Func<Task> action))
+                    await action();
+                await Task.Delay(Config.MasterUpdateDelay);
+                await MasterClient.SendState(ServerState, Players.Count, Config.MaxPlayers);
+            }
+        }
 
         public void OnNetworkError(NetEndPoint endPoint, int socketErrorCode)
         {

@@ -1,26 +1,34 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace NecroServer
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main(string[] args) =>
+            AMain(args).Wait();
+
+        static async Task AMain(string[] args)
         {
             var config = new Config(args);
-
             Logger.Init(config.DiscordLog);
             Logger.Log("LOGGER init");
 
-            var server = new Server(config);
+            var masterClient = new MasterClient(config);
+
+            var additionalArgs = await masterClient.RequestConfig();
+            config.AppendArgs(additionalArgs.Args.ToArray());
+
+            var server = new Server(config, masterClient);
 
             try
-            { server.Run().Wait(); }
+            { await server.Run(); }
             catch (Exception e)
             { Logger.Log($"SERVER ERROR: {e.Message}", true); }
 
-            System.Threading.Thread.Sleep(3000);
+            await Task.Delay(3000);
             Logger.Stop();
-            System.Threading.Thread.Sleep(2000);
+            await Task.Delay(2000);
         }
     }
 }
