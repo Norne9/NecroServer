@@ -42,7 +42,6 @@ namespace MasterServer
                 jsonTextReader.CloseInput = false;
 
                 var obj = serializer.Deserialize<T>(jsonTextReader);
-
                 var results = new List<ValidationResult>();
                 if (Validator.TryValidateObject(obj, new ValidationContext(obj), results))
                 {
@@ -51,7 +50,7 @@ namespace MasterServer
 
                 httpContext.Response.StatusCode = 400;
                 httpContext.Response.WriteJson(results);
-
+                
                 return default(T);
             }
         }

@@ -249,7 +249,10 @@ namespace NecroServer
             if (ServerState == ServerState.Playing)
                 World.RemovePlayer(peer.ConnectId);
             else if (Players.ContainsKey(peer.ConnectId))
+            {
                 Players.Remove(peer.ConnectId);
+                SendPlayersInfo();
+            }
 
             if (Peers.Count == 0)
                 Stop("no players");
