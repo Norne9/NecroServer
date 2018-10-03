@@ -73,6 +73,7 @@ namespace MasterServer
                 .ConfigureLogging((hostingContext, l) =>
                 {
                     l.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                    l.SetMinimumLevel(LogLevel.Warning);
                     l.AddConsole();
                 })
                 .UseIISIntegration()

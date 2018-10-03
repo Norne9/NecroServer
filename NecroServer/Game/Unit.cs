@@ -36,7 +36,7 @@ namespace Game
         public Unit(Config config, ushort id, byte mesh, float maxHealth, float moveSpeed, float attackDelay, float viewRadius, float attackRange, float damage)
         {
             Config = config;
-            Radius = 1f;
+            Radius = 0.5f;
 
             UnitId = id;
 

@@ -9,7 +9,7 @@ namespace Game
     {
         public const float SpaceBetween = 2f;
 
-        const float MiniMin = 0.5f;
+        const float MiniMin = 0.3f;
         const float MiniMax = 2.0f;
 
         const float BigMin = 3.0f;
@@ -17,7 +17,7 @@ namespace Game
 
         public static PhysicalObject MakeObstacle()
         {
-            var size = GameMath.MathF.RandomFloat(0, 1) < 0.9f ?
+            var size = GameMath.MathF.RandomFloat(0, 1) < 0.7f ?
                 GameMath.MathF.RandomFloat(MiniMin, MiniMax) : GameMath.MathF.RandomFloat(BigMin, BigMax);
             return new PhysicalObject() { Radius = size };
         }

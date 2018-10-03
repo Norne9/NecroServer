@@ -73,7 +73,6 @@ namespace Game
                 }
             }
 
-            // TODO: Add real players check
             //No more players - end game
             if (AlivePlayers == 0)
                 OnGameEnd?.Invoke();

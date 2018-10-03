@@ -53,6 +53,7 @@ namespace NecroServer
 
         private async void OnClientConnection(ClientConnection clientConnection, NetPeer peer)
         {
+            //check game state
             if (ServerState == ServerState.Playing || ServerState == ServerState.EndGame)
             {
                 Logger.Log($"SERVER connection attempt during game: {clientConnection.UserId}");
@@ -60,8 +61,8 @@ namespace NecroServer
                 return;
             }
 
+            //check player
             var clientData = await MasterClient.RequestClientInfo(clientConnection.UserId, clientConnection.UserKey);
-
             if (!clientData.Valid)
             {
                 Logger.Log($"SERVER invalid connection attempt: {clientConnection.UserId}");
@@ -69,6 +70,7 @@ namespace NecroServer
                 return;
             }
 
+            //create player
             var player = new Player(clientData.UserId, peer.ConnectId, clientData.Name, clientData.DoubleUnits, Config);
             Players.Add(peer.ConnectId, player);
             if (Players.Count == 1)
@@ -76,9 +78,15 @@ namespace NecroServer
                 startTime = DateTime.Now;
                 ServerState = ServerState.WaitingPlayers;
             }
+
+            //send map
+            peer.Send(NetSerializer.Serialize(World.GetServerMap()), SendOptions.ReliableUnordered);
+
+            //send player info
             Logger.Log($"SERVER player '{player.Name}' connected");
             SendPlayersInfo();
 
+            //start game if last player
             if (Players.Count >= Config.MaxPlayers)
                 StartGame();
         }
@@ -239,7 +247,7 @@ namespace NecroServer
 
         public void OnNetworkReceive(NetPeer peer, NetDataReader reader) //Receive packets
         {
-            NetSerializer.ReadAllPackets(reader);
+            NetSerializer.ReadAllPackets(reader, peer);
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
