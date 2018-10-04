@@ -35,7 +35,7 @@ namespace NecroServer
         public float RuneRange { get; set; } = 0.5f;
         public float ViewRange { get; set; } = 20f;
 
-        public float RiseRadius { get; set; } = 6f;
+        public float RiseRadius { get; set; } = 4f;
         public float RiseCooldown { get; set; } = 12f;
 
         public float HealValue { get; set; } = 0.2f;

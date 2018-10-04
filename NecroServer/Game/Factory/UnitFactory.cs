@@ -8,11 +8,12 @@ namespace Game
 {
     public class UnitFactory
     {
-        private const byte MeshTroll = 0;
-        private const byte MeshOrk   = 1;
-        private const byte MeshBear  = 2;
+        private const byte MeshTroll  = 0;
+        private const byte MeshOrk    = 1;
+        private const byte MeshBear   = 2;
+        private const byte MeshZombie = 3;
 
-        private const float DefaultMoveSpeed = 2;
+        private const float DefaultMoveSpeed = 4f;
         private const float DefaultViewRadius = 6f;
         private const float DefaultAttackRange = 1.5f;
 
@@ -28,9 +29,10 @@ namespace Game
             var troll = new Unit(config, 0, MeshTroll, 100f, DefaultMoveSpeed, 0.5f, DefaultViewRadius, DefaultAttackRange, 9f);
             var ork = new Unit(config, 0, MeshOrk, 150f, DefaultMoveSpeed, 1.0f, DefaultViewRadius, DefaultAttackRange, 20f);
             var bear = new Unit(config, 0, MeshBear, 250f, DefaultMoveSpeed, 1.0f, DefaultViewRadius, DefaultAttackRange, 23f);
+            var zombie = new Unit(config, 0, MeshZombie, 100f, DefaultMoveSpeed, 0.6f, DefaultViewRadius, DefaultAttackRange, 9.5f);
 
             UnitProtos = new List<Unit>()
-            { troll, troll, troll, ork, ork, bear, };
+            { troll, troll, troll, zombie, zombie, zombie, ork, ork, bear, };
         }
 
         public Unit MakeUnit()

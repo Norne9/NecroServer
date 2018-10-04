@@ -48,8 +48,8 @@ namespace Game
                     obj = ObstacleFactory.MakeObstacle();
 
                     obj.Position = GetPointInCircle(WorldScale * Config.ObstacleRange);
-                    if (GameMath.MathF.Abs(obj.Position.X) > WorldScale) continue;
-                    if (GameMath.MathF.Abs(obj.Position.Y) > WorldScale) continue;
+                    if (GameMath.MathF.Abs(obj.Position.X) > WorldScale - 2f) continue;
+                    if (GameMath.MathF.Abs(obj.Position.Y) > WorldScale - 2f) continue;
 
                     tree = new OcTree(new BoundingBox(-200, -200, 400, 400), objs, false);
                 } while (tree == null || tree.Intersect(obj.Position, obj.Radius + ObstacleFactory.SpaceBetween));
