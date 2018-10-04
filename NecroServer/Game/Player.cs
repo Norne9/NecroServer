@@ -89,22 +89,8 @@ namespace Game
             //process units
             for (int i = Units.Count - 1; i >= 0; i--)
             {
-                //Find best position
-                var tPos = Vector2.Empty;
-                float bestDst = float.MaxValue;
-                foreach (var point in poses)
-                {
-                    var dst = (Units[i].Position - point).SqrLength();
-                    if (dst<bestDst)
-                    {
-                        tPos = point;
-                        bestDst = dst;
-                    }
-                }
-                poses.Remove(tPos);
-
                 //Update unit
-                Units[i].Update(world, tPos, attack);
+                Units[i].Update(world, poses[i], attack);
             }
 
             //Update avg position
@@ -118,17 +104,17 @@ namespace Game
         {
             if (dir.SqrLength() > 1f)
                 dir = dir.Normalize();
-            float rot = System.MathF.Atan2(dir.Y, dir.X);
+            float rot = System.MathF.Atan2(-dir.X, dir.Y);
             float cs = System.MathF.Cos(rot);
             float sn = System.MathF.Sin(rot);
             for (int i = 0; i < positions.Count; i++)
             {
-                float x = positions[i].X;
-                float y = positions[i].Y;
-                x = x * cs - y * sn;
-                y = x * sn + y * cs;
+                float ox = positions[i].X;
+                float oy = positions[i].Y;
+                float x = ox * cs - oy * sn;
+                float y = ox * sn + oy * cs;
                 positions[i] = AvgPosition + new Vector2(x, y);
-                if (move) positions[i] += dir;
+                if (move) positions[i] += dir * 0.3f;
             }
         }
 

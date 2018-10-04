@@ -30,7 +30,7 @@ namespace Game
             var result = new List<OcTreeObject>();
             var obj = new OcTreeObject(new PhysicalObject() { Position = pos, Radius = rad });
             MainNode.Overlap(obj, result);
-            return result.Select((o) => (T)o.LinkedObject).ToList();
+            return result.Select((o) => o.LinkedObject as T).ToList();
         }
 
 

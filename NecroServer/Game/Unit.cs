@@ -28,6 +28,7 @@ namespace Game
         private Vector2 lastPosition = Vector2.Empty;
         private Vector2 lastDir = Vector2.Empty;
         private float Rotation = 0f;
+        private bool AttackCommnd = false;
 
         private DateTime lastAttack = DateTime.Now;
 
@@ -75,7 +76,7 @@ namespace Game
 
             var lookDirection = CalcLook(); //Default look direction
             Attack = false; //Reset attack
-
+            AttackCommnd = cmdAttack;
             if (cmdAttack) //Find target and attack or stay calm
             {
                 var target = world.OverlapUnits(Position, ViewRadius)
@@ -116,7 +117,7 @@ namespace Game
                 TakeDamage(null, MaxHealth * 2f);
 
             //Calculate rotation
-            Rotation = System.MathF.Atan2(lookDirection.Y, lookDirection.X);
+            Rotation = System.MathF.Atan2(-lookDirection.X, -lookDirection.Y);
         }
 
         private Vector2 CalcLook()
@@ -147,7 +148,7 @@ namespace Game
         private Vector2 CalcNewPos(Vector2 target, float speed, float dt)
         {
             var vec = (target - Position);
-            var tpDst = speed * 2f * dt;
+            var tpDst = speed * dt;
             if (vec.SqrLength() < tpDst * tpDst) //We near target - teleport
                 return target;
             return Position + vec.Normalize() * dt * speed;
@@ -177,7 +178,7 @@ namespace Game
         public void TakeDamage(Unit damager, float damage)
         {
             if (!IsAlive) return;
-            damage = GameMath.MathF.RandomFloat(1f - Config.RandomDamage / 2f, 1f + Config.RandomDamage / 2f);
+            damage *= GameMath.MathF.RandomFloat(1f - Config.RandomDamage / 2f, 1f + Config.RandomDamage / 2f);
             Health -= damage;
 
             if (damager?.Owner != null)
@@ -198,6 +199,50 @@ namespace Game
                 if (damager?.Owner != null)
                     damager.Owner.PlayerStatus.UnitKill++;
             }
+        }
+
+        public override void Move(Vector2 newPosition, params OcTree[] trees)
+        {
+            float oldX = Position.X;
+            float oldY = Position.Y;
+            float newX = newPosition.X;
+            float newY = newPosition.Y;
+
+            Position = new Vector2(oldX, newY);
+            if (CheckIntersect(trees))
+            {
+                newY = 2 * oldY - newY;
+                Position = new Vector2(oldX, newY);
+                if (CheckIntersect(trees))
+                    newY = oldY;
+            }
+
+            Position = new Vector2(newX, newY);
+            if (CheckIntersect(trees))
+            {
+                newX = 2 * oldX - newX;
+                Position = new Vector2(newX, newY);
+                if (CheckIntersect(trees))
+                    newX = oldX;
+            }
+
+            Position = new Vector2(newX, newY);
+        }
+
+        private bool CheckIntersect(OcTree[] trees)
+        {
+            foreach (var tree in trees)
+            {
+                var objs = tree.Overlap<Unit>(Position, Radius);
+                foreach (var obj in objs)
+                {
+                    if (obj == null) return true;
+                    if (obj.Owner == null || obj == this) continue;
+                    if (obj.Owner != Owner) return true;
+                    if (AttackCommnd) return true;
+                }
+            }
+            return false;
         }
     }
 }
