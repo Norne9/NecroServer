@@ -6,6 +6,7 @@ namespace Packets
     {
         public float Scale { get; set; }
         public int MaxPlayers { get; set; }
+        public int MaxUnits { get; set; }
         public int MapType { get; set; }
         public ObstacleInfo[] Obstacles { get; set; }
     }

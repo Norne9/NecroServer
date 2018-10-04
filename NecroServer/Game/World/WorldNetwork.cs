@@ -19,8 +19,8 @@ namespace Game
                 if (player.IsAlive)
                 {
                     Logger.Log($"GAME remove player '{player.Name}'");
-                    foreach (var unit in player.Units)
-                        unit.TakeDamage(null, unit.MaxHealth * 2f);
+                    for (int i = player.Units.Count - 1; i >= 0; i--)
+                        player.Units[i].TakeDamage(null, player.Units[i].MaxHealth * 2f);
                 }
                 Players.Remove(networkId);
             }

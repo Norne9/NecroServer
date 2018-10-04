@@ -22,7 +22,7 @@ namespace Game
             var enemyUnits = nearUnits.Where((u) => u.Owner != null && u.Owner != player);
             var neutralUnits = nearUnits.Where((u) => u.Owner == null);
 
-            bool fight = player.Units.Count > enemyUnits.Count() && enemyUnits.Count() > 0;
+            bool fight = player.Units.Count * 2 >= enemyUnits.Count() && enemyUnits.Count() > 0;
             bool rise = neutralUnits.Count() > 0;
             bool goCenter = player.AvgPosition.SqrLength() * 1.1f > world.ZoneRadius * world.ZoneRadius;
 

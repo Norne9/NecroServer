@@ -73,7 +73,7 @@ namespace Game
                 lastRise = DateTime.Now;
                 var unitsRise = world.OverlapUnits(AvgPosition, Config.RiseRadius)
                     .Where((u) => u.Owner == null);
-                if (unitsRise.Count() > 0)
+                if (unitsRise.Count() > 0 && Units.Count < Config.MaxUnitCount)
                     foreach (var unit in unitsRise)
                         unit.Rise(this);
                 else
@@ -84,13 +84,29 @@ namespace Game
             //get input for units
             var attack = InputMove.SqrLength() < Config.InputDeadzone;
             var poses = UnitPosition.GetPositions(Units.Count);
-            ProcessPositions(poses, SmallInput, !attack);
+            var movePoses = ProcessPositions(poses, SmallInput, !attack);
+
+            var sortedUnits = Units.OrderBy((u) => u.BestDist);
+            foreach (var unit in sortedUnits)
+            {
+                unit.BestDist = float.MaxValue;
+                foreach (var pos in movePoses)
+                {
+                    var dist = (unit.Position - pos.stay).SqrLength();
+                    if (dist < unit.BestDist)
+                    {
+                        unit.BestDist = dist;
+                        unit.TargetPos = pos;
+                    }
+                }
+                movePoses.Remove(unit.TargetPos);
+            }
 
             //process units
             for (int i = Units.Count - 1; i >= 0; i--)
             {
                 //Update unit
-                Units[i].Update(world, poses[i], attack);
+                Units[i].Update(world, Units[i].TargetPos.move, attack);
             }
 
             //Update avg position
@@ -100,8 +116,9 @@ namespace Game
             AvgPosition /= Units.Count;
         }
 
-        private void ProcessPositions(List<Vector2> positions, Vector2 dir, bool move)
+        private List<(Vector2 stay, Vector2 move)> ProcessPositions(List<Vector2> positions, Vector2 dir, bool move)
         {
+            var result = new List<(Vector2 stay, Vector2 move)>();
             if (dir.SqrLength() > 1f)
                 dir = dir.Normalize();
             float rot = System.MathF.Atan2(-dir.X, dir.Y);
@@ -114,8 +131,9 @@ namespace Game
                 float x = ox * cs - oy * sn;
                 float y = ox * sn + oy * cs;
                 positions[i] = AvgPosition + new Vector2(x, y);
-                if (move) positions[i] += dir * 0.3f;
+                result.Add((positions[i], move ? positions[i] + dir * 0.3f : positions[i]));
             }
+            return result;
         }
 
         public void SetRune(RuneType rune)

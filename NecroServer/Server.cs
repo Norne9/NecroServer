@@ -139,8 +139,8 @@ namespace NecroServer
         {
             World.StartGame(Players);
             ServerState = ServerState.Playing;
-            startTime = DateTime.Now;
             SendPlayersInfo();
+            startTime = DateTime.Now;
         }
 
         public async Task Run()

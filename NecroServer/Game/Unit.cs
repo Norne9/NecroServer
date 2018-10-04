@@ -10,6 +10,9 @@ namespace Game
 {
     public class Unit : PhysicalObject
     {
+        public (Vector2 stay, Vector2 move) TargetPos;
+        public float BestDist;
+
         public ushort UnitId { get; }
 
         public byte UnitMesh { get; }
@@ -85,7 +88,7 @@ namespace Game
                     .FirstOrDefault();
                 if (target != null) //We have target
                 {
-                    lookDirection = (target.Position - Position); //Look at enemy
+                    lookDirection = (Position - target.Position); //Look at enemy
                     if ((target.Position - Position).SqrLength() > AttackRange * AttackRange) //We far
                         world.MoveUnit(this, CalcNewPos(target.Position, speed, world.DeltaTime)); //go
                     else
@@ -189,60 +192,52 @@ namespace Game
 
             if (!IsAlive)
             {
+                Health = 0f;
                 if (damager == null)
                     Logger.Log($"GAME unit {UnitId}@{Owner?.Name ?? "null"} killed by zone");
                 else
                     Logger.Log($"GAME unit {damager.UnitId}@{damager.Owner?.Name ?? "null"} killed {UnitId}@{Owner?.Name ?? "null"}");
                 Owner?.Units.Remove(this);
                 Owner = null;
+                Attack = false;
 
                 if (damager?.Owner != null)
                     damager.Owner.PlayerStatus.UnitKill++;
             }
         }
 
-        public override void Move(Vector2 newPosition, params OcTree[] trees)
+        public void Move(Vector2 newPosition, float dt, params OcTree[] trees)
         {
-            float oldX = Position.X;
-            float oldY = Position.Y;
-            float newX = newPosition.X;
-            float newY = newPosition.Y;
+            Position = newPosition;
 
-            Position = new Vector2(oldX, newY);
-            if (CheckIntersect(trees))
-            {
-                newY = 2 * oldY - newY;
-                Position = new Vector2(oldX, newY);
-                if (CheckIntersect(trees))
-                    newY = oldY;
-            }
-
-            Position = new Vector2(newX, newY);
-            if (CheckIntersect(trees))
-            {
-                newX = 2 * oldX - newX;
-                Position = new Vector2(newX, newY);
-                if (CheckIntersect(trees))
-                    newX = oldX;
-            }
-
-            Position = new Vector2(newX, newY);
+            if (CheckIntersect(trees, out Vector2 vec, out bool onlyMyUnits))
+                Position = CalcNewPos(Position + (Position - vec), MoveSpeed * ((AttackCommnd || !onlyMyUnits) ? 1.5f : 0.5f), dt);
         }
 
-        private bool CheckIntersect(OcTree[] trees)
+        private bool CheckIntersect(OcTree[] trees, out Vector2 result, out bool onlyMyUnits)
         {
+            result = Vector2.Empty;
+            var poses = new List<Vector2>();
+            onlyMyUnits = true;
             foreach (var tree in trees)
             {
-                var objs = tree.Overlap<Unit>(Position, Radius);
+                var objs = tree.Overlap<PhysicalObject>(Position, Radius);
                 foreach (var obj in objs)
                 {
-                    if (obj == null) return true;
-                    if (obj.Owner == null || obj == this) continue;
-                    if (obj.Owner != Owner) return true;
-                    if (AttackCommnd) return true;
+                    var unit = obj as Unit;
+                    if (unit == null) { poses.Add(obj.Position); onlyMyUnits = false; continue; };
+                    if (unit.Owner == null || obj == this) continue;
+                    if (unit.Owner != Owner) onlyMyUnits = false;
+                    poses.Add(unit.Position);
                 }
             }
-            return false;
+            if (poses.Count == 0)
+                return false;
+            
+            foreach (var vec in poses)
+                result += vec;
+            result /= poses.Count;
+            return true;
         }
     }
 }

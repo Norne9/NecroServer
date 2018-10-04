@@ -6,7 +6,7 @@ namespace NecroServer
     class Program
     {
         static void Main(string[] args) =>
-            AMain(args).Wait();
+            AMain(args).GetAwaiter().GetResult();
 
         static async Task AMain(string[] args)
         {

@@ -14,9 +14,7 @@ namespace Game
 
         public void MoveUnit(Unit unit, Vector2 newPos)
         {
-            if ((unit.Position - newPos).SqrLength() < 0.001f) //Don't move if on pos
-                return;
-            unit.Move(newPos, UnitsTree, ObstaclesTree);//,
+            unit.Move(newPos, DeltaTime, UnitsTree, ObstaclesTree);
         }
 
         public RuneType TakeRune(Unit unit)
