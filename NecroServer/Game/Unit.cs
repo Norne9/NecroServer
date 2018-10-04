@@ -146,7 +146,7 @@ namespace Game
 
         private Vector2 CalcNewPos(Vector2 target, float speed, float dt)
         {
-            var vec = (Position - target);
+            var vec = (target - Position);
             var tpDst = speed * 2f * dt;
             if (vec.SqrLength() < tpDst * tpDst) //We near target - teleport
                 return target;

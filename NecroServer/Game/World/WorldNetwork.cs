@@ -31,7 +31,7 @@ namespace Game
             if (Players == null) return true;
             if (Players.ContainsKey(networkId))
             {
-                Players[networkId].SetInput(new Vector2(-input.MoveX, -input.MoveY), input.Rise);
+                Players[networkId].SetInput(new Vector2(input.MoveX, input.MoveY), input.Rise);
                 return true;
             }
             else
