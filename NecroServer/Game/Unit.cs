@@ -56,7 +56,7 @@ namespace Game
 
         public Unit(Config config, ushort id, Unit proto) : this(config, id,
             proto.UnitMesh, proto.MaxHealth, proto.MoveSpeed, proto.AttackDelay, proto.ViewRadius, proto.AttackRange, proto.Damage, proto.RiseTime)
-        { }
+        { Rotation = GameMath.MathF.RandomFloat(0f, GameMath.MathF.PI / 2f); }
 
         public UnitInfo GetUnitInfo(World world, Player player) =>
             new UnitInfo()
@@ -85,7 +85,7 @@ namespace Game
             if (cmdAttack) //Find target and attack or stay calm
             {
                 var target = world.OverlapUnits(Position, ViewRadius)
-                    .Where((u) => u.Owner != Owner && u.Owner != null) //Find other player unit
+                    .Where((u) => u.Owner != Owner && u.Owner != null && u.Owner.UnitsRune != RuneType.Stealth) //Find other player unit
                     .OrderBy((u) => (Position - u.Position).SqrLength()) //Sort by distance
                     .FirstOrDefault();
                 if (target != null) lookDirection = (target.Position - Position); //Look at enemy
@@ -99,6 +99,8 @@ namespace Game
                             world.MoveUnit(this, CalcNewPos(target.Position, speed, world.DeltaTime)); //go
                         else
                         {
+                            if (Owner?.UnitsRune == RuneType.Stealth) //Remove stealth
+                                Owner.SetRune(RuneType.None);
                             Attack = true; //Play attack animation
                             lastAttack = DateTime.Now;
                             target.TakeDamage(this, damage);
@@ -201,7 +203,10 @@ namespace Game
             if (Owner != null)
                 Owner.PlayerStatus.DamageReceive += damage;
 
-            if (!IsAlive)
+            if (Owner?.UnitsRune == RuneType.Stealth) //Remove stealth
+                Owner.SetRune(RuneType.None);
+
+            if (!IsAlive) //Die
             {
                 Health = 0f;
                 if (damager == null)

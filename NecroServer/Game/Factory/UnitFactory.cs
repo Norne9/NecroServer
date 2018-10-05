@@ -35,9 +35,7 @@ namespace Game
             { troll, troll, troll, zombie, zombie, zombie, ork, ork, bear, };
         }
 
-        public Unit MakeUnit()
-        {
-            return new Unit(Config, CurrentUnitId++, UnitProtos[GameMath.MathF.RandomInt(0, UnitProtos.Count)]);
-        }
+        public Unit MakeUnit() =>
+            new Unit(Config, CurrentUnitId++, UnitProtos[GameMath.MathF.RandomInt(0, UnitProtos.Count)]);
     }
 }

@@ -196,6 +196,7 @@ namespace NecroServer
                 //Wait
                 await Task.Delay(Config.UpdateDelay);
 
+#if DEBUG
                 //Console commands
                 if (Console.KeyAvailable)
                 {
@@ -216,6 +217,7 @@ namespace NecroServer
                             break;
                     }
                 }
+#endif
             }
             server.Stop();
             Logger.Log($"SERVER stopped");
