@@ -44,7 +44,7 @@ namespace Game
         public ServerFrame GetServerFrame(Player player)
         {
             var visiblePlayers = Players.Where((p) => p.Value == player ||
-                    (p.Value.UnitsRune != RuneType.Stealth && (p.Value.AvgPosition - player.AvgPosition).SqrLength() < Config.ViewRange))
+                    (p.Value.IsAlive && p.Value.UnitsRune != RuneType.Stealth && (p.Value.AvgPosition - player.AvgPosition).SqrLength() < Config.ViewRange * Config.ViewRange))
                 .Select((p) => p.Value.GetPlayerCameraInfo()).ToArray();
 
             var visibleUnits = OverlapUnits(player.AvgPosition, Config.ViewRange)
@@ -85,6 +85,7 @@ namespace Game
                 Scale = WorldScale,
                 Obstacles = Obstacles.Select((o) => o.GetObstacleInfo()).ToArray(),
                 MaxPlayers = Config.MaxPlayers,
+                MaxUnits = Config.MaxUnitCount,
                 MapType = MapType
             };
     }

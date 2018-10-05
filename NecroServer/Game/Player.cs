@@ -24,7 +24,7 @@ namespace Game
         public readonly PlayerStatus PlayerStatus = new PlayerStatus();
 
         private Vector2 InputMove = new Vector2(0, 0);
-        private Vector2 SmallInput = new Vector2(0, 1);
+        public Vector2 SmallInput { get; private set; } = new Vector2(0, 1);
         private bool InputRise = false;
 
         private DateTime lastRune = DateTime.Now;

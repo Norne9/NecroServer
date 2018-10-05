@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Globalization;
 
 namespace NecroServer
 {
@@ -8,8 +7,8 @@ namespace NecroServer
     {
         public int Port { get; set; } = 15364;
 
-        public int MaxUnitCount { get; set; } = 9;
-        public int MaxPlayers { get; set; } = 20;
+        public int MaxUnitCount { get; set; } = 8;
+        public int MaxPlayers { get; set; } = 30;
         public int UpdateDelay { get; set; } = 30;
 
         public float PlayerWaitTime { get; set; } = 45f;
@@ -35,7 +34,7 @@ namespace NecroServer
         public float RuneRange { get; set; } = 0.5f;
         public float ViewRange { get; set; } = 20f;
 
-        public float RiseRadius { get; set; } = 6f;
+        public float RiseRadius { get; set; } = 4f;
         public float RiseCooldown { get; set; } = 12f;
 
         public float HealValue { get; set; } = 0.2f;
@@ -50,12 +49,43 @@ namespace NecroServer
 
         public Config(string[] args)
         {
-
+            AppendArgs(args);
         }
 
         public void AppendArgs(string[] args)
         {
-
+            Type t = typeof(Config);
+            var props = t.GetProperties();
+            foreach (var prop in props)
+            {
+                var propName = prop.Name.ToLower();
+                for (int i = 0; i < args.Length; i++)
+                {
+                    var cmd = args[i].Replace("-", "").ToLower();
+                    if (cmd != propName) continue;
+                    switch (Type.GetTypeCode(prop.PropertyType))
+                    {
+                        case TypeCode.String:
+                            var paramString = args[++i];
+                            prop.SetValue(this, paramString);
+                            Logger.Log($"CONFIG '{prop.Name}': '{paramString}'");
+                            break;
+                        case TypeCode.Int32:
+                            var paramInt = int.Parse(args[++i]);
+                            prop.SetValue(this, paramInt);
+                            Logger.Log($"CONFIG '{prop.Name}': '{paramInt}'");
+                            break;
+                        case TypeCode.Single:
+                            var paramFloat = float.Parse(args[++i].Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture);
+                            prop.SetValue(this, paramFloat);
+                            Logger.Log($"CONFIG '{prop.Name}': '{paramFloat}'");
+                            break;
+                        default:
+                            Logger.Log($"CONFIG unknown type: {prop.PropertyType.Name}");
+                            break;
+                    }
+                }
+            }
         }
     }
 }

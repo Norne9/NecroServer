@@ -82,6 +82,10 @@ namespace NecroServer
             //send map
             peer.Send(NetSerializer.Serialize(World.GetServerMap()), SendOptions.ReliableUnordered);
 
+            //add time
+            if ((DateTime.Now - startTime).TotalSeconds < 10)
+                startTime = startTime.AddSeconds(5);
+
             //send player info
             Logger.Log($"SERVER player '{player.Name}' connected");
             SendPlayersInfo();

@@ -19,20 +19,27 @@ namespace Game
         public static void MakeStep(Config config, Player player, World world)
         {
             var nearUnits = world.OverlapUnits(player.AvgPosition, config.ViewRange);
-            var enemyUnits = nearUnits.Where((u) => u.Owner != null && u.Owner != player);
-            var neutralUnits = nearUnits.Where((u) => u.Owner == null);
+            var enemyUnits = world.OverlapUnits(player.AvgPosition, player.Units.FirstOrDefault()?.ViewRadius ?? 1f)
+                .Where((u) => u.Owner != null && u.Owner != player);
+            var neutralUnits = world.OverlapUnits(player.AvgPosition, config.RiseRadius).Where((u) => u.Owner == null);
 
-            bool fight = player.Units.Count * 2 >= enemyUnits.Count() && enemyUnits.Count() > 0;
+            bool fight = (player.Units.Count >= enemyUnits.Count()) && enemyUnits.Any();
             bool rise = neutralUnits.Count() > 0;
             bool goCenter = player.AvgPosition.SqrLength() * 1.1f > world.ZoneRadius * world.ZoneRadius;
 
-            Vector2 inputDir = Vector2.Empty;
+            Vector2 inputDir = (nearUnits.Where((u) => u.Owner == null).FirstOrDefault()?.Position ?? Vector2.Empty) - player.AvgPosition;
+            if (enemyUnits.Any())
+            {
+                inputDir = Vector2.Empty;
+                foreach (var u in enemyUnits)
+                    inputDir += u.Position;
+                inputDir /= enemyUnits.Count();
+                inputDir = player.AvgPosition - inputDir;
+            }
             if (goCenter)
                 inputDir = Vector2.Empty - player.AvgPosition;
             else if (fight)
                 inputDir = Vector2.Empty;
-            else if (rise)
-                inputDir = neutralUnits.First().Position - player.AvgPosition;
 
             player.SetInput(inputDir, rise);
         }

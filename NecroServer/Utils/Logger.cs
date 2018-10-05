@@ -17,7 +17,10 @@ namespace NecroServer
         }
         public static void Log(string message, bool crit = false)
         {
-            Inst?.AddMessage(message, crit);
+            if (Inst == null)
+                Console.WriteLine($"#[{DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")}]\t{message}");
+            else
+                Inst.AddMessage(message, crit);
         }
         public static void Stop()
         {

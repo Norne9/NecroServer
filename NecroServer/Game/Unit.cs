@@ -19,6 +19,7 @@ namespace Game
         public float MaxHealth { get; }
         public float MoveSpeed { get; }
         public float AttackDelay { get; }
+        public float RiseTime { get; }
         public float ViewRadius { get; }
         public float AttackRange { get; }
         public float Damage { get; }
@@ -28,16 +29,15 @@ namespace Game
         public Player Owner { get; private set; } = null;
         public bool Attack { get; private set; } = false;
 
-        private Vector2 lastPosition = Vector2.Empty;
-        private Vector2 lastDir = Vector2.Empty;
         private float Rotation = 0f;
         private bool AttackCommnd = false;
 
         private DateTime lastAttack = DateTime.Now;
+        private DateTime lastRise = DateTime.Now;
 
         private readonly Config Config;
 
-        public Unit(Config config, ushort id, byte mesh, float maxHealth, float moveSpeed, float attackDelay, float viewRadius, float attackRange, float damage)
+        public Unit(Config config, ushort id, byte mesh, float maxHealth, float moveSpeed, float attackDelay, float viewRadius, float attackRange, float damage, float riseTime)
         {
             Config = config;
             Radius = 0.5f;
@@ -50,11 +50,12 @@ namespace Game
             AttackDelay = attackDelay;
             ViewRadius = viewRadius;
             AttackRange = attackRange;
+            RiseTime = riseTime;
             Damage = damage;
         }
 
         public Unit(Config config, ushort id, Unit proto) : this(config, id,
-            proto.UnitMesh, proto.MaxHealth, proto.MoveSpeed, proto.AttackDelay, proto.ViewRadius, proto.AttackRange, proto.Damage)
+            proto.UnitMesh, proto.MaxHealth, proto.MoveSpeed, proto.AttackDelay, proto.ViewRadius, proto.AttackRange, proto.Damage, proto.RiseTime)
         { }
 
         public UnitInfo GetUnitInfo(World world, Player player) =>
@@ -74,6 +75,7 @@ namespace Game
         public void Update(World world, Vector2 cmdPos, bool cmdAttack)
         {
             if (!IsAlive) return;
+            if ((DateTime.Now - lastRise).TotalSeconds < RiseTime) return;
 
             var (damage, speed) = ApplyRune();
 
@@ -86,26 +88,38 @@ namespace Game
                     .Where((u) => u.Owner != Owner && u.Owner != null) //Find other player unit
                     .OrderBy((u) => (Position - u.Position).SqrLength()) //Sort by distance
                     .FirstOrDefault();
-                if (target != null) //We have target
+                if (target != null) lookDirection = (target.Position - Position); //Look at enemy
+
+                //We cant do anithing if we attack
+                if ((DateTime.Now - lastAttack).TotalSeconds > AttackDelay)
                 {
-                    lookDirection = (Position - target.Position); //Look at enemy
-                    if ((target.Position - Position).SqrLength() > AttackRange * AttackRange) //We far
-                        world.MoveUnit(this, CalcNewPos(target.Position, speed, world.DeltaTime)); //go
-                    else
+                    if (target != null) //We have target
                     {
-                        Attack = true; //Play attack animation
-                        if ((DateTime.Now - lastAttack).TotalSeconds > AttackDelay) //Is it time to attack?
+                        if ((target.Position - Position).SqrLength() > AttackRange * AttackRange) //We far
+                            world.MoveUnit(this, CalcNewPos(target.Position, speed, world.DeltaTime)); //go
+                        else
                         {
+                            Attack = true; //Play attack animation
                             lastAttack = DateTime.Now;
                             target.TakeDamage(this, damage);
                         }
                     }
+                    else //No target - Just move
+                    {
+                        var tPos = CalcNewPos(cmdPos, speed, world.DeltaTime);
+                        lookDirection = (tPos - Position);
+                        world.MoveUnit(this, tPos);
+                    }
                 }
-                else //No target - Just move
-                    world.MoveUnit(this, CalcNewPos(cmdPos, speed, world.DeltaTime));
+                else
+                    Attack = true;
             }
             else //Just move
-                world.MoveUnit(this, CalcNewPos(cmdPos, speed, world.DeltaTime));
+            {
+                var tPos = CalcNewPos(cmdPos, speed, world.DeltaTime);
+                lookDirection = (tPos - Position);
+                world.MoveUnit(this, tPos);
+            }
 
             //Take rune
             var rune = world.TakeRune(this);
@@ -120,17 +134,13 @@ namespace Game
                 TakeDamage(null, MaxHealth * 2f);
 
             //Calculate rotation
-            Rotation = System.MathF.Atan2(-lookDirection.X, -lookDirection.Y);
+            if (lookDirection.SqrLength() < 0.001f)
+                lookDirection = CalcLook();
+            Rotation = System.MathF.Atan2(lookDirection.X, lookDirection.Y);
         }
 
-        private Vector2 CalcLook()
-        {
-            var dir = lastPosition - Position;
-            if (dir.SqrLength() > 0f)
-                lastDir = dir;
-            lastPosition = Position;
-            return lastDir;
-        }
+        private Vector2 CalcLook() =>
+            Owner?.SmallInput ?? new Vector2(0, 1);
 
         private (float dmg, float spd) ApplyRune()
         {
@@ -168,6 +178,7 @@ namespace Game
             player.Units.Add(this);
 
             player.PlayerStatus.UnitRise++;
+            lastRise = DateTime.Now;
         }
 
         public void Heal()

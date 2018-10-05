@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Globalization;
 
 namespace MasterServer
 {
@@ -17,7 +16,43 @@ namespace MasterServer
 
         public Config(string[] args)
         {
+            AppendArgs(args);
+        }
 
+        public void AppendArgs(string[] args)
+        {
+            Type t = typeof(Config);
+            var props = t.GetProperties();
+            foreach (var prop in props)
+            {
+                var propName = prop.Name.ToLower();
+                for (int i = 0; i < args.Length; i++)
+                {
+                    var cmd = args[i].Replace("-", "").ToLower();
+                    if (cmd != propName) continue;
+                    switch (Type.GetTypeCode(prop.PropertyType))
+                    {
+                        case TypeCode.String:
+                            var paramString = args[++i];
+                            prop.SetValue(this, paramString);
+                            Logger.Log($"CONFIG '{prop.Name}': '{paramString}'");
+                            break;
+                        case TypeCode.Int32:
+                            var paramInt = int.Parse(args[++i]);
+                            prop.SetValue(this, paramInt);
+                            Logger.Log($"CONFIG '{prop.Name}': '{paramInt}'");
+                            break;
+                        case TypeCode.Single:
+                            var paramFloat = float.Parse(args[++i].Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture);
+                            prop.SetValue(this, paramFloat);
+                            Logger.Log($"CONFIG '{prop.Name}': '{paramFloat}'");
+                            break;
+                        default:
+                            Logger.Log($"CONFIG unknown type: {prop.PropertyType.Name}");
+                            break;
+                    }
+                }
+            }
         }
     }
 }
