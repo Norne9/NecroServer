@@ -226,24 +226,29 @@ namespace Game
         {
             Position = newPosition;
 
-            if (CheckIntersect(trees, out Vector2 vec, out bool onlyMyUnits))
-                Position = CalcNewPos(Position + (Position - vec), MoveSpeed * ((AttackCommnd || !onlyMyUnits) ? 1.5f : 0.5f), dt);
+            if (CheckIntersect(trees, out Vector2 vec, out float pushPower))
+                Position = CalcNewPos(Position + (Position - vec), MoveSpeed * (AttackCommnd ? 2.0f : pushPower), dt);
         }
 
-        private bool CheckIntersect(OcTree[] trees, out Vector2 result, out bool onlyMyUnits)
+        private bool CheckIntersect(OcTree[] trees, out Vector2 result, out float pushPower)
         {
             result = Vector2.Empty;
             var poses = new List<Vector2>();
-            onlyMyUnits = true;
+            pushPower = 0.2f;
             foreach (var tree in trees)
             {
                 var objs = tree.Overlap<PhysicalObject>(Position, Radius);
                 foreach (var obj in objs)
                 {
                     var unit = obj as Unit;
-                    if (unit == null) { poses.Add(obj.Position); onlyMyUnits = false; continue; };
+                    if (unit == null)
+                    {
+                        poses.Add(obj.Position);
+                        pushPower = pushPower < 0.9f ? 0.9f : pushPower;
+                        continue;
+                    }
                     if (unit.Owner == null || obj == this) continue;
-                    if (unit.Owner != Owner) onlyMyUnits = false;
+                    if (unit.Owner != Owner) pushPower = pushPower < 2.0f ? 2.0f : pushPower;
                     poses.Add(unit.Position);
                 }
             }
