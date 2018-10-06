@@ -11,7 +11,7 @@ namespace NecroServer
         static async Task AMain(string[] args)
         {
             var config = new Config(args);
-            Logger.Init(config.DiscordLog);
+            Logger.Init(config.DiscordLog, config.DiscordAll > 0);
             Logger.Log("LOGGER init");
 
             var masterClient = new MasterClient(config);

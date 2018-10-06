@@ -17,6 +17,7 @@ namespace NecroServer
 
         public string DiscordLog { get; set; } = null;
         public string ConnectionKey { get; set; } = "debug";
+        public int DiscordAll { get; set; } = 0;
 
         public string MasterServer { get; set; } = "http://85.143.173.253:8856/";
         public int MasterUpdateDelay { get; set; } = 2000;

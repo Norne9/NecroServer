@@ -11,9 +11,9 @@ namespace NecroServer
     {
         //STATIC
         private static Logger Inst;
-        public static void Init(string discordLog = "")
+        public static void Init(string discordLog, bool logAll)
         {
-            Inst = new Logger(discordLog);
+            Inst = new Logger(discordLog, logAll);
         }
         public static void Log(string message, bool crit = false)
         {
@@ -42,10 +42,11 @@ namespace NecroServer
         private readonly HttpClient client = new HttpClient();
         private readonly ConcurrentQueue<Message> msgQueue = new ConcurrentQueue<Message>();
         private readonly Task msgTask;
-        private bool Work = true;
+        private bool Work = true, LogAll = false;
 
-        private Logger(string discordLog)
+        private Logger(string discordLog, bool logAll)
         {
+            LogAll = logAll;
             WebHookUrl = discordLog;
             msgTask = Task.Run(() => LoggerTask());
         }
@@ -62,7 +63,8 @@ namespace NecroServer
                         Console.ForegroundColor = msg.IsCritical ? ConsoleColor.DarkRed : col;
                         Console.WriteLine($"{(msg.IsCritical ? "!" : " ")}[{msg.Time.ToString("dd.MM.yyyy HH:mm:ss.fff")}]\t{msg.Text}");
                         Console.ForegroundColor = col;
-                        await DiscordSend(msg.Time, msg.Text, msg.IsCritical);
+                        if (LogAll || msg.IsCritical)
+                            await DiscordSend(msg.Time, msg.Text, msg.IsCritical);
                     }
                     catch (Exception) { }
                 }
