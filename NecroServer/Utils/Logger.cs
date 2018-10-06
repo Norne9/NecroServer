@@ -99,6 +99,7 @@ namespace NecroServer
         {
             Work = false;
             msgTask?.Wait();
+            client?.Dispose();
         }
     }
 }

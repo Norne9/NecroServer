@@ -9,11 +9,31 @@ namespace Game
 {
     public static class AI
     {
+        private static readonly string[] AiNames = new string[]
+        {
+            "Bluebeard", "Wasabeii", "Faustox",
+            "Diviper", "Jhalmar", "Hironnoa",
+            "Phipps", "Michel", "Forsart",
+            "Tempus", "ReneCake", "Vatkuli",
+            "Rastapro", "exturnel", "Mafubaa",
+            "SombreReve", "oSumairu", "1zom",
+            "McChimney", "JoeColandru", "BruceMc",
+            "DaxBabiix", "kashmarko", "County",
+            "marsu29", "MayDie", "Gerro",
+            "Nouryoku", "Rakav", "Volton",
+            "Sunyio", "Periwinkled", "skellor",
+            "masu1", "Sasha27", "Remali",
+            "sidefr", "zaques", "Dubbeli",
+            "Nedeze", "Wladik32rus", "Mpoublack",
+            "DoLuX"
+        };
+        private static readonly int NameOffset = GameMath.MathF.RandomInt(0, 1000);
         private static long AiUserId = -1;
         public static Player GetAiPlayer(Config config)
         {
             var id = AiUserId--;
-            return new Player(id, id, "AI" + id, false, config);
+            var name = AiNames[(Math.Abs(id) + NameOffset) % AiNames.Length];
+            return new Player(id, id, name, false, config);
         }
 
         public static void MakeStep(Config config, Player player, World world)
