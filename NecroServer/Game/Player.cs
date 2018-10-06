@@ -77,6 +77,7 @@ namespace Game
                     .Where((u) => u.Owner == null);
                 if (unitsRise.Count() > 0 && Units.Count < Config.MaxUnitCount)
                 {
+                    unitsRise = unitsRise.OrderBy((u) => (AvgPosition - u.Position).SqrLength());
                     foreach (var unit in unitsRise)
                         unit.Rise(this);
                     RiseCount++;

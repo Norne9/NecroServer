@@ -87,13 +87,13 @@ namespace NecroServer
             if (WaitTime < Config.MinWaitTime)
                 WaitTime = Config.MinWaitTime;
 
+            //min time if last player
+            if (Players.Count >= Config.MaxPlayers && WaitTime > Config.MinWaitTime)
+                WaitTime = Config.MinWaitTime;
+
             //send player info
             Logger.Log($"SERVER player '{player.Name}' connected");
             SendPlayersInfo();
-
-            //start game if last player
-            if (Players.Count >= Config.MaxPlayers)
-                StartGame();
         }
 
         private void SendPlayersInfo()

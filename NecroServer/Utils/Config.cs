@@ -37,12 +37,12 @@ namespace NecroServer
 
         public float RiseRadius { get; set; } = 4f;
         public float RiseCooldown { get; set; } = 10f;
-        public float RiseAddCooldown { get; set; } = 1f / 3f;
+        public float RiseAddCooldown { get; set; } = 0.6f;
 
         public float HealValue { get; set; } = 0.2f;
         public float RandomDamage { get; set; } = 0.1f;
 
-        public float ZoneDps { get; set; } = 15f;
+        public float ZoneDps { get; set; } = 10f;
 
         public float InputDeadzone { get; set; } = 0.1f;
 
