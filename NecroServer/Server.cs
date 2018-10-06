@@ -176,7 +176,7 @@ namespace NecroServer
                         else if (Peers.ContainsKey(netId)) //Real & connected player
                         {
                             if (player.IsAlive) //Send world frame
-                                Peers[netId].Send(NetSerializer.Serialize(World.GetServerFrame(player)), SendOptions.Unreliable);
+                                Peers[netId].Send(NetSerializer.Serialize(World.GetServerFrame(player)), SendOptions.Sequenced);
                             else //Send end packet
                                 Peers[netId].Send(NetSerializer.Serialize(World.GetServerEnd(player)), SendOptions.Unreliable);
                         }

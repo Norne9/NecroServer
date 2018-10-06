@@ -23,9 +23,9 @@ namespace Game
                 .Where((u) => u.Owner != null && u.Owner != player);
             var neutralUnits = world.OverlapUnits(player.AvgPosition, config.RiseRadius).Where((u) => u.Owner == null);
 
-            bool fight = (player.Units.Count >= enemyUnits.Count()) && enemyUnits.Any();
+            bool fight = ((player.Units.Count >= enemyUnits.Count() - 2) && enemyUnits.Any()) || enemyUnits.Where((u)=> !u.Owner.IsAI).Any();
             bool rise = neutralUnits.Count() > 0;
-            bool goCenter = player.AvgPosition.SqrLength() * 1.1f > world.ZoneRadius * world.ZoneRadius;
+            bool goCenter = !fight && player.AvgPosition.SqrLength() * 1.3f > world.ZoneRadius * world.ZoneRadius;
 
             Vector2 inputDir = (nearUnits.Where((u) => u.Owner == null).FirstOrDefault()?.Position ?? Vector2.Empty) - player.AvgPosition;
             if (enemyUnits.Any())

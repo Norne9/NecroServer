@@ -114,7 +114,10 @@ namespace Game
                     }
                 }
                 else
+                {
+                    world.MoveUnit(this, Position); //stay
                     Attack = true;
+                }
             }
             else //Just move
             {
