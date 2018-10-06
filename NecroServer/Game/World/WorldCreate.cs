@@ -51,7 +51,7 @@ namespace Game
                     if (GameMath.MathF.Abs(obj.Position.X) > WorldScale - 2f) continue;
                     if (GameMath.MathF.Abs(obj.Position.Y) > WorldScale - 2f) continue;
 
-                    tree = new OcTree(new BoundingBox(-200, -200, 400, 400), objs, false);
+                    tree = new OcTree(WorldZone, objs, false);
                 } while (tree == null || tree.Intersect(obj.Position, obj.Radius + ObstacleFactory.SpaceBetween));
                 objs.Add(obj);
             }
@@ -64,7 +64,7 @@ namespace Game
             var factory = new UnitFactory(Config);
             for (int i = 0; i < count; i++)
             {
-                var tree = new OcTree(new BoundingBox(-200, -200, 400, 400), objs, false);
+                var tree = new OcTree(WorldZone, objs, false);
                 var obj = factory.MakeUnit();
                 Vector2 pos;
                 do
@@ -81,12 +81,16 @@ namespace Game
             var objs = new List<Rune>();
             for (int i = 0; i < count; i++)
             {
-                var tree = new OcTree(new BoundingBox(-200, -200, 400, 400), objs, false);
+                var tree = new OcTree(WorldZone, objs, false);
                 var obj = RuneFactory.MakeRune();
+                
                 Vector2 pos;
                 do
                 {
                     pos = GetPointInCircle(WorldScale * Config.RuneRange);
+                    obj.Radius = WorldScale / 3f;
+                    if (!obj.TryMove(pos, tree)) continue;
+                    obj.Radius = RuneFactory.RuneRadius;
                 } while (!obj.TryMove(pos, tree, ObstaclesTree, UnitsTree));
                 objs.Add(obj);
             }

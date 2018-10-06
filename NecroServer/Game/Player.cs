@@ -27,8 +27,9 @@ namespace Game
         public Vector2 SmallInput { get; private set; } = new Vector2(0, 1);
         private bool InputRise = false;
 
-        private DateTime lastRune = DateTime.Now;
-        private DateTime lastRise = DateTime.Now.AddYears(-1);
+        private DateTime LastRune = DateTime.Now;
+        private DateTime LastRise = DateTime.Now.AddYears(-1);
+        private int RiseCount = 0;
 
         private readonly Config Config;
 
@@ -48,7 +49,8 @@ namespace Game
             new PlayerCameraInfo() { PosX = AvgPosition.X, PosY = AvgPosition.Y, UserId = UserId };
 
         public float GetCooldown() =>
-            GameMath.MathF.Clamp(Config.RiseCooldown - (float)(DateTime.Now - lastRise).TotalSeconds, 0f, Config.RiseCooldown);
+            GameMath.MathF.Clamp((Config.RiseCooldown + RiseCount * Config.RiseAddCooldown) - (float)(DateTime.Now - LastRise).TotalSeconds,
+                0f, (Config.RiseCooldown + RiseCount * Config.RiseAddCooldown));
 
         public void SetInput(Vector2 input, bool rise)
         {
@@ -64,18 +66,21 @@ namespace Game
             PlayerStatus.AliveTime += world.DeltaTime;
 
             //Check rune time
-            if (UnitsRune != RuneType.None && (DateTime.Now - lastRune).TotalSeconds > Config.RuneTime)
+            if (UnitsRune != RuneType.None && (DateTime.Now - LastRune).TotalSeconds > Config.RuneTime)
                 UnitsRune = RuneType.None;
 
             //Check rise or heal
-            if (InputRise && (DateTime.Now - lastRise).TotalSeconds > Config.RiseCooldown)
+            if (InputRise && GetCooldown() < 0.001f)
             {
-                lastRise = DateTime.Now;
+                LastRise = DateTime.Now;
                 var unitsRise = world.OverlapUnits(AvgPosition, Config.RiseRadius)
                     .Where((u) => u.Owner == null);
                 if (unitsRise.Count() > 0 && Units.Count < Config.MaxUnitCount)
+                {
                     foreach (var unit in unitsRise)
                         unit.Rise(this);
+                    RiseCount++;
+                }
                 else
                     foreach (var unit in Units)
                         unit.Heal();
@@ -138,7 +143,7 @@ namespace Game
 
         public void SetRune(RuneType rune)
         {
-            lastRune = DateTime.Now;
+            LastRune = DateTime.Now;
             UnitsRune = rune;
         }
     }

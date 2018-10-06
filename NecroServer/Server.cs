@@ -25,6 +25,7 @@ namespace NecroServer
 
         private ServerState ServerState = ServerState.Started;
         private DateTime startTime = DateTime.Now;
+        private float WaitTime = 0f;
 
         private ConcurrentQueue<Func<Task>> RequestQueue = new ConcurrentQueue<Func<Task>>();
 
@@ -75,7 +76,7 @@ namespace NecroServer
             Players.Add(peer.ConnectId, player);
             if (Players.Count == 1)
             {
-                startTime = DateTime.Now;
+                WaitTime = Config.PlayerWaitTime;
                 ServerState = ServerState.WaitingPlayers;
             }
 
@@ -83,8 +84,8 @@ namespace NecroServer
             peer.Send(NetSerializer.Serialize(World.GetServerMap()), SendOptions.ReliableUnordered);
 
             //add time
-            if ((DateTime.Now - startTime).TotalSeconds < 10)
-                startTime = startTime.AddSeconds(5);
+            if (WaitTime < Config.MinWaitTime)
+                WaitTime = Config.MinWaitTime;
 
             //send player info
             Logger.Log($"SERVER player '{player.Name}' connected");
@@ -99,7 +100,7 @@ namespace NecroServer
         {
             var packet = new ServerPlayers()
             {
-                WaitTime = Config.PlayerWaitTime - (float)(DateTime.Now - startTime).TotalSeconds,
+                WaitTime = WaitTime,
                 Players = Players.Values.Select((p) => p.GetPlayerInfo()).ToArray(),
             };
             var data = NetSerializer.Serialize(packet);
@@ -160,8 +161,8 @@ namespace NecroServer
                 //countdown to start
                 if (ServerState == ServerState.WaitingPlayers)
                 {
-                    if ((DateTime.Now - startTime).TotalSeconds > Config.PlayerWaitTime)
-                        StartGame();
+                    if (WaitTime < 0f) StartGame();
+                    WaitTime -= Config.UpdateDelay / 1000.0f;
                 }
 
                 //update world

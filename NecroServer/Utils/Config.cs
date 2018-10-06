@@ -12,6 +12,7 @@ namespace NecroServer
         public int UpdateDelay { get; set; } = 30;
 
         public float PlayerWaitTime { get; set; } = 45f;
+        public float MinWaitTime { get; set; } = 10f;
         public float EndWaitTime { get; set; } = 15f;
 
         public string DiscordLog { get; set; } = null;
@@ -21,7 +22,7 @@ namespace NecroServer
         public int MasterUpdateDelay { get; set; } = 2000;
 
         public int UnitCount { get; set; } = 150;
-        public int RuneCount { get; set; } = 8;
+        public int RuneCount { get; set; } = 16;
         public int ObstacleCount { get; set; } = 200;
 
         public int MaxWorldScale { get; set; } = 80;
@@ -29,13 +30,14 @@ namespace NecroServer
 
         public float RuneTime { get; set; } = 20f;
 
-        public float UnitRange { get; set; } = 0.95f;
-        public float ObstacleRange { get; set; } = 1.1f;
-        public float RuneRange { get; set; } = 0.5f;
+        public float UnitRange { get; set; } = 0.98f;
+        public float ObstacleRange { get; set; } = 1.05f;
+        public float RuneRange { get; set; } = 0.88f;
         public float ViewRange { get; set; } = 20f;
 
         public float RiseRadius { get; set; } = 4f;
-        public float RiseCooldown { get; set; } = 12f;
+        public float RiseCooldown { get; set; } = 10f;
+        public float RiseAddCooldown { get; set; } = 1f / 3f;
 
         public float HealValue { get; set; } = 0.2f;
         public float RandomDamage { get; set; } = 0.1f;
