@@ -9,5 +9,7 @@ namespace Packets
         public int MaxUnits { get; set; }
         public int MapType { get; set; }
         public ObstacleInfo[] Obstacles { get; set; }
+        public UnitInfo[] Units { get; set; }
+        public RuneInfo[] Runes { get; set; }
     }
 }

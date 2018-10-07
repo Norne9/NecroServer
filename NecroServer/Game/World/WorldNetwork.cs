@@ -86,7 +86,9 @@ namespace Game
                 Obstacles = Obstacles.Select((o) => o.GetObstacleInfo()).ToArray(),
                 MaxPlayers = Config.MaxPlayers,
                 MaxUnits = Config.MaxUnitCount,
-                MapType = MapType
+                MapType = MapType,
+                Runes = Runes.Select((r) => r.GetRuneInfo()).ToArray(),
+                Units = Units.Select((u) => u.GetUnitInfo(this, null)).ToArray(),
             };
     }
 }
