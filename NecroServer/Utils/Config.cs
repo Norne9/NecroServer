@@ -11,7 +11,7 @@ namespace NecroServer
         public int MaxPlayers { get; set; } = 30;
         public int UpdateDelay { get; set; } = 30;
 
-        public float PlayerWaitTime { get; set; } = 45f;
+        public float PlayerWaitTime { get; set; } = 30f;
         public float MinWaitTime { get; set; } = 10f;
         public float EndWaitTime { get; set; } = 15f;
 
@@ -34,21 +34,22 @@ namespace NecroServer
         public float UnitRange { get; set; } = 0.98f;
         public float ObstacleRange { get; set; } = 1.05f;
         public float RuneRange { get; set; } = 0.88f;
+
         public float ViewRange { get; set; } = 20f;
 
-        public float RiseRadius { get; set; } = 4f;
+        public float RiseRadius { get; set; } = 5f;
         public float RiseCooldown { get; set; } = 10f;
         public float RiseAddCooldown { get; set; } = 0.6f;
 
         public float HealValue { get; set; } = 0.2f;
         public float RandomDamage { get; set; } = 0.1f;
 
-        public float ZoneDps { get; set; } = 10f;
+        public float ZoneDps { get; set; } = 12f;
 
         public float InputDeadzone { get; set; } = 0.001f;
 
-        public float StaticTime { get; set; } = 120f;
-        public float ResizeTime { get; set; } = 160f;
+        public float StaticTime { get; set; } = 50f;
+        public float ResizeTime { get; set; } = 60f;
 
         public Config(string[] args)
         {

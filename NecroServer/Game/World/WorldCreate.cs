@@ -16,6 +16,7 @@ namespace Game
             MapType = GameMath.MathF.RandomInt(0, 100);
             WorldScale = GameMath.MathF.RandomInt(config.MinWorldScale, config.MaxWorldScale);
             ZoneRadius = WorldScale;
+            TargetZoneRadius = 0.3f * ZoneRadius;
             WorldZone = new BoundingBox(-WorldScale, -WorldScale, WorldScale * 2, WorldScale * 2);
 
             Logger.Log("WORLD creating obstacles");

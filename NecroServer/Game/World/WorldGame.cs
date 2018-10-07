@@ -85,18 +85,28 @@ namespace Game
                     {
                         StartTime = DateTime.Now;
                         WorldState = WorldState.Resize;
+                        BeginZoneRadius = ZoneRadius;
                         Logger.Log($"GAME zone begin");
                     }
                     TimeToEnd = Config.StaticTime - (float)(DateTime.Now - StartTime).TotalSeconds;
                     break;
                 case WorldState.Resize:
                     float percent = (Config.ResizeTime - (float)(DateTime.Now - StartTime).TotalSeconds) / Config.ResizeTime;
-                    if (percent < 0f) percent = 0;
-                    ZoneRadius = WorldScale * percent;
-                    TimeToEnd = Config.ResizeTime - (float)(DateTime.Now - StartTime).TotalSeconds;
+                    if (percent < 0f) {
+                        percent = 0; TargetZoneRadius = 0f;
+                        StartTime = DateTime.Now; WorldState = WorldState.Static;
+                    }
+                    else
+                    {
+                        ZoneRadius = Lerp(BeginZoneRadius, TargetZoneRadius, 1f - percent);
+                        TimeToEnd = Config.ResizeTime - (float)(DateTime.Now - StartTime).TotalSeconds;
+                    }
                     break;
             }
             if (TimeToEnd < 0) TimeToEnd = 0;
         }
+
+        private float Lerp(float from, float to, float percent) =>
+            from * (1f - percent) + to * percent;
     }
 }

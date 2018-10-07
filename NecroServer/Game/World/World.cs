@@ -32,6 +32,7 @@ namespace Game
         public float DeltaTime { get; private set; } = 0f;
 
         public float ZoneRadius { get; private set; }
+        private float TargetZoneRadius = 0f, BeginZoneRadius = 0f;
         private WorldState WorldState = WorldState.Static;
         private DateTime StartTime = DateTime.Now;
 
