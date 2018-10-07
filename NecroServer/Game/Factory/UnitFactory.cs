@@ -29,7 +29,7 @@ namespace Game
             var troll = new Unit(config, 0, MeshTroll, 100f, DefaultMoveSpeed, 1.33f, DefaultViewRadius, DefaultAttackRange, 10f, 1.33f);
             var ork = new Unit(config, 0, MeshOrk, 150f, DefaultMoveSpeed, 0.76f, DefaultViewRadius, DefaultAttackRange, 10f, 1.33f);
             var bear = new Unit(config, 0, MeshBear, 250f, DefaultMoveSpeed, 0.83f, DefaultViewRadius, DefaultAttackRange, 16f, 1.33f);
-            var zombie = new Unit(config, 0, MeshZombie, 100f, DefaultMoveSpeed, 1.33f, DefaultViewRadius, DefaultAttackRange, 10f, 1.33f);
+            var zombie = new Unit(config, 0, MeshZombie, 100f, DefaultMoveSpeed, 0.66f, DefaultViewRadius, DefaultAttackRange, 9f, 1.33f);
 
             UnitProtos = new List<Unit>()
             { troll, troll, troll, zombie, zombie, zombie, ork, ork, bear, };
