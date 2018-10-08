@@ -149,7 +149,7 @@ namespace MasterServer
                 UpdateUsers();
             var scores = SortedUsers
                 .Skip(reqLeaderboard.Page * reqLeaderboard.Count).Take(reqLeaderboard.Count)
-                .Select((u) => new Score() { Name = u.Value.UserName, Place = u.Value.WorldPlace, WinCount = u.Value.WinCount })
+                .Select((u) => new Score() { Name = u.Value.UserName, Place = u.Value.WorldPlace, WinCount = u.Value.WinCount, UserId = u.Value.UserId })
                 .ToList();
             return new RespLeaderboard() { Scores = scores };
         }

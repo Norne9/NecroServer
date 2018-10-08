@@ -9,5 +9,6 @@ namespace MasterReqResp
         public string Name { get; set; } = "";
         public int WinCount { get; set; } = 0;
         public int Place { get; set; } = 0;
+        public long UserId { get; set; } = 0;
     }
 }
