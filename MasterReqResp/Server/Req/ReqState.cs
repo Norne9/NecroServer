@@ -10,5 +10,6 @@ namespace MasterReqResp
         public int ConnectedPlayers { get; set; } = 0;
         public int TotalPlayers { get; set; } = 0;
         public int Port { get; set; } = 0;
+        public string ServerVersion { get; set; } = "";
     }
 }

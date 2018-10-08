@@ -94,6 +94,9 @@ namespace NecroServer
             //send player info
             Logger.Log($"SERVER player '{player.Name}' connected");
             SendPlayersInfo();
+
+            //Send info to master
+            await SendInfoToMaster();
         }
 
         private void SendPlayersInfo()
@@ -237,9 +240,11 @@ namespace NecroServer
                 while (RequestQueue.TryDequeue(out Func<Task> action))
                     await action();
                 await Task.Delay(Config.MasterUpdateDelay);
-                await MasterClient.SendState(ServerState, Players.Count, Config.MaxPlayers);
+                await SendInfoToMaster();
             }
         }
+        private async Task SendInfoToMaster() =>
+            await MasterClient.SendState(ServerState, Players.Where((p) => !p.Value.IsAI).Count(), Config.MaxPlayers, Config.ConnectionKey);
 
         public void OnNetworkError(NetEndPoint endPoint, int socketErrorCode)
         {
@@ -257,7 +262,7 @@ namespace NecroServer
             NetSerializer.ReadAllPackets(reader, peer);
         }
 
-        public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
+        public async void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
             Logger.Log($"SERVER client {peer.ConnectId} disconnected, reason: '{disconnectInfo.Reason}'");
             Peers.Remove(peer.ConnectId);
@@ -268,6 +273,9 @@ namespace NecroServer
                 Players.Remove(peer.ConnectId);
                 SendPlayersInfo();
             }
+
+            //Send info to master
+            await SendInfoToMaster();
 
             if (Peers.Count == 0)
                 Stop("no players");

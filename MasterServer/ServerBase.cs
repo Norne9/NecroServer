@@ -29,7 +29,8 @@ namespace MasterServer
                     InLobby = state.InLobby,
                     LastData = DateTime.Now,
                     Port = state.Port,
-                    TotalPlayers = state.TotalPlayers
+                    TotalPlayers = state.TotalPlayers,
+                    Version = state.ServerVersion,
                 };
                 Servers.Add(server);
             }
@@ -39,24 +40,26 @@ namespace MasterServer
                 server.InLobby = state.InLobby;
                 server.TotalPlayers = state.TotalPlayers;
                 server.LastData = DateTime.Now;
+                server.Version = state.ServerVersion;
             }
         }
 
-        public GameServer FindServer()
+        public GameServer FindServer(string version)
         {
             for (int i = Servers.Count - 1; i >= 0; i--)
                 if ((DateTime.Now - Servers[i].LastData).TotalSeconds > Config.ServerTime)
                     Servers.RemoveAt(i);
 
-            var servers = Servers.Where((s) => s.InLobby && s.ConnectedPlayers < s.TotalPlayers && s.ConnectedPlayers > 0);
-            if (!servers.Any()) servers = Servers.Where((s) => s.InLobby && s.ConnectedPlayers < s.TotalPlayers);
+            var sameVersion = Servers.Where((s) => s.Version == version);
+            var servers = sameVersion.Where((s) => s.InLobby && s.ConnectedPlayers < s.TotalPlayers && s.ConnectedPlayers > 0);
+            if (!servers.Any()) servers = sameVersion.Where((s) => s.InLobby && s.ConnectedPlayers < s.TotalPlayers);
 
             var server = servers.OrderBy((s) => s.LastData.Ticks).FirstOrDefault();
             if (server != null) server.ConnectedPlayers++;
 
             if (server == null)
             {
-                Logger.Log($"SRV not enouth servers", true);
+                Logger.Log($"SRV not enouth servers, version '{version}'", true);
                 DebugServers();
             }
 

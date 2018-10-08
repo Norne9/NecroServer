@@ -151,7 +151,7 @@ namespace MasterServer
                         {
                             var req = request.HttpContext.ReadFromJson<ReqServer>();
                             userBase.SetDoubleUnits(req.UserId, req.DoubleUnits);
-                            var server = serverBase.FindServer();
+                            var server = serverBase.FindServer(req.ServerVersion);
                             if (server != null)
                                 response.WriteJson(new RespServer() {
                                     Address = server.Address.ToString(),

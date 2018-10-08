@@ -13,6 +13,7 @@ namespace MasterServer
         public bool InLobby { get; set; } = false;
         public int ConnectedPlayers { get; set; } = 0;
         public int TotalPlayers { get; set; } = 0;
+        public string Version { get; set; } = "";
         public DateTime LastData { get; set; } = DateTime.Now;
     }
 }

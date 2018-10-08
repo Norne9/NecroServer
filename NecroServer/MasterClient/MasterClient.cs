@@ -55,7 +55,7 @@ namespace NecroServer
             return new RespClient();
         }
 
-        public async Task SendState(ServerState state, int playerCount, int totalPlayers)
+        public async Task SendState(ServerState state, int playerCount, int totalPlayers, string version)
         {
             try
             {
@@ -64,7 +64,8 @@ namespace NecroServer
                     InLobby = state == ServerState.Started || state == ServerState.WaitingPlayers,
                     ConnectedPlayers = playerCount,
                     TotalPlayers = totalPlayers,
-                    Port = Config.Port
+                    Port = Config.Port,
+                    ServerVersion = version,
                 });
                 await HttpClient.PostAsync(Config.MasterServer + "state", new StringContent(json, Encoding.UTF8, "application/json"));
             }
