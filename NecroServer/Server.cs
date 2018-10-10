@@ -192,7 +192,8 @@ namespace NecroServer
                 if (ServerState == ServerState.EndGame)
                 {
                     foreach (var (netId, player) in Players)
-                        if (!player.IsAI) Peers[netId].Send(NetSerializer.Serialize(World.GetServerEnd(player)), SendOptions.Unreliable);
+                        if (!player.IsAI && Peers.ContainsKey(netId))
+                            Peers[netId].Send(NetSerializer.Serialize(World.GetServerEnd(player)), SendOptions.Unreliable);
                     if ((DateTime.Now - startTime).TotalSeconds > Config.EndWaitTime)
                         Stop("timeout");
                 }

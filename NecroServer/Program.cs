@@ -24,7 +24,7 @@ namespace NecroServer
             try
             { await server.Run(); }
             catch (Exception e)
-            { Logger.Log($"SERVER ERROR: {e.Message}", true); }
+            { Logger.Log($"SERVER ERROR: {e.ToString()}", true); }
 
             await Task.Delay(3000);
             Logger.Stop();
