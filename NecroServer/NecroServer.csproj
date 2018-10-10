@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LiteNetLib" Version="0.7.7.3" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0005" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta0005" />
@@ -14,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GameMath\GameMath.csproj" />
+    <ProjectReference Include="..\LiteNetLib\LiteNetLib.csproj" />
     <ProjectReference Include="..\MasterReqResp\MasterReqResp.csproj" />
   </ItemGroup>
 

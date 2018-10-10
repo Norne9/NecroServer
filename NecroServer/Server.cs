@@ -178,20 +178,16 @@ namespace NecroServer
                             AI.MakeStep(Config, player, World);
                         else if (Peers.ContainsKey(netId)) //Real & connected player
                         {
-                            try
+                            if (player.IsAlive) //Send world frame
                             {
-                                if (player.IsAlive) //Send world frame
-                                {
-                                    var packet = NetSerializer.Serialize(World.GetServerFrame(player));
-                                    Peers[netId].Send(packet, SendOptions.Sequenced);
-                                }
-                                else //Send end packet
-                                {
-                                    var packet = NetSerializer.Serialize(World.GetServerEnd(player));
-                                    Peers[netId].Send(packet, SendOptions.Unreliable);
-                                }
+                                var packet = NetSerializer.Serialize(World.GetServerFrame(player));
+                                Peers[netId].Send(packet, SendOptions.Sequenced);
                             }
-                            catch (Exception) { }
+                            else //Send end packet
+                            {
+                                var packet = NetSerializer.Serialize(World.GetServerEnd(player));
+                                Peers[netId].Send(packet, SendOptions.Unreliable);
+                            }
                         }
                         else
                             Logger.Log($"SERVER unknown peer {netId}");

@@ -8,12 +8,14 @@ namespace Game
 {
     public partial class World
     {
+        private const int MaxTryCount = short.MaxValue;
+
         public World(Config config)
         {
             Config = config;
 
             Logger.Log("WORLD creating world");
-            MapType = GameMath.MathF.RandomInt(0, 100);
+            MapType = GameMath.MathF.RandomInt(int.MinValue, int.MaxValue);
             WorldScale = GameMath.MathF.RandomInt(config.MinWorldScale, config.MaxWorldScale);
             ZoneRadius = WorldScale;
             TargetZoneRadius = 0.3f * ZoneRadius;
@@ -43,8 +45,8 @@ namespace Game
             for (int i = 0; i < count; i++)
             {
                 OcTree tree = null;
-                PhysicalObject obj;
-                do
+                PhysicalObject obj = null;
+                for (int n = 0; n < MaxTryCount; n++)
                 {
                     obj = ObstacleFactory.MakeObstacle();
 
@@ -53,7 +55,10 @@ namespace Game
                     if (GameMath.MathF.Abs(obj.Position.Y) > WorldScale - 2f) continue;
 
                     tree = new OcTree(WorldZone, objs, false);
-                } while (tree == null || tree.Intersect(obj.Position, obj.Radius + ObstacleFactory.SpaceBetween));
+
+                    if (tree != null && !tree.Intersect(obj.Position, obj.Radius + ObstacleFactory.SpaceBetween))
+                        break;
+                }
                 objs.Add(obj);
             }
             return objs.ToArray();
@@ -68,10 +73,12 @@ namespace Game
                 var tree = new OcTree(WorldZone, objs, false);
                 var obj = factory.MakeUnit();
                 Vector2 pos;
-                do
+                for (int n = 0; n < MaxTryCount; n++)
                 {
                     pos = GetPointInCircle(WorldScale * Config.UnitRange);
-                } while (!obj.TryMove(pos, tree, ObstaclesTree));
+                    if (obj.TryMove(pos, tree, ObstaclesTree))
+                        break;
+                }
                 objs.Add(obj);
             }
             return objs.ToArray();
@@ -86,13 +93,16 @@ namespace Game
                 var obj = RuneFactory.MakeRune();
                 
                 Vector2 pos;
-                do
+                for (int n = 0; n < MaxTryCount; n++)
                 {
                     pos = GetPointInCircle(WorldScale * Config.RuneRange);
                     obj.Radius = WorldScale / 3f;
                     if (!obj.TryMove(pos, tree)) continue;
                     obj.Radius = RuneFactory.RuneRadius;
-                } while (!obj.TryMove(pos, tree, ObstaclesTree, UnitsTree));
+
+                    if (obj.TryMove(pos, tree, ObstaclesTree, UnitsTree))
+                        break;
+                }
                 objs.Add(obj);
             }
             return objs;
@@ -101,12 +111,13 @@ namespace Game
         private Vector2 GetPointInCircle(float Radius)
         {
             float sRad = Radius * Radius;
-            while (true)
+            Vector2 pos = Vector2.Empty;
+            for (int n = 0; n < MaxTryCount; n++)
             {
-                var pos = new Vector2(GameMath.MathF.RandomFloat(-Radius, Radius), GameMath.MathF.RandomFloat(-Radius, Radius));
-                if (pos.SqrLength() < sRad)
-                    return pos;
+                pos = new Vector2(GameMath.MathF.RandomFloat(-Radius, Radius), GameMath.MathF.RandomFloat(-Radius, Radius));
+                if (pos.SqrLength() < sRad) break;
             }
+            return pos;
         }
     }
 }
