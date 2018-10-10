@@ -36,7 +36,7 @@ namespace NecroServer
             Config = config;
             server = new NetManager(this, Config.MaxPlayers, Config.ConnectionKey)
             {
-                UpdateTime = Config.UpdateDelay
+                UpdateTime = Config.UpdateDelay,
             };
 
             Logger.Log($"SERVER register packets");
@@ -178,10 +178,20 @@ namespace NecroServer
                             AI.MakeStep(Config, player, World);
                         else if (Peers.ContainsKey(netId)) //Real & connected player
                         {
-                            if (player.IsAlive) //Send world frame
-                                Peers[netId].Send(NetSerializer.Serialize(World.GetServerFrame(player)), SendOptions.Sequenced);
-                            else //Send end packet
-                                Peers[netId].Send(NetSerializer.Serialize(World.GetServerEnd(player)), SendOptions.Unreliable);
+                            try
+                            {
+                                if (player.IsAlive) //Send world frame
+                                {
+                                    var packet = NetSerializer.Serialize(World.GetServerFrame(player));
+                                    Peers[netId].Send(packet, SendOptions.Sequenced);
+                                }
+                                else //Send end packet
+                                {
+                                    var packet = NetSerializer.Serialize(World.GetServerEnd(player));
+                                    Peers[netId].Send(packet, SendOptions.Unreliable);
+                                }
+                            }
+                            catch (Exception) { }
                         }
                         else
                             Logger.Log($"SERVER unknown peer {netId}");
