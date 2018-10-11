@@ -7,7 +7,6 @@ namespace NecroServer
     {
         public int Port { get; set; } = 15364;
 
-        public int MaxUnitsPacket { get; set; } = 60;
         public int MaxUnitCount { get; set; } = 8;
         public int MaxPlayers { get; set; } = 30;
         public int UpdateDelay { get; set; } = 30;
@@ -23,6 +22,8 @@ namespace NecroServer
         public string MasterServer { get; set; } = "http://85.143.173.253:8856/";
         public int MasterUpdateDelay { get; set; } = 2000;
 
+        public int MaxUnitsPacket { get; set; } = 60;
+        public int AdditionalUnitCount { get; set; } = 2;
         public int UnitCount { get; set; } = 150;
         public int RuneCount { get; set; } = 16;
         public int ObstacleCount { get; set; } = 200;

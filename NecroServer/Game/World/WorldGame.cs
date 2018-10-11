@@ -27,7 +27,19 @@ namespace Game
                 var unit = RandomUnit();
                 unit.Rise(player);
                 if (player.DoubleUnits)
-                    NearUnit(unit).Rise(player);
+                {
+                    for (int i = 0; i < Config.AdditionalUnitCount; i++)
+                        NearUnit(unit).Rise(player);
+
+                    var poses = UnitPosition.GetPositions(player.Units.Count);
+                    var avgPosition = new Vector2(0, 0);
+                    foreach (var unit1 in player.Units)
+                        avgPosition += unit1.Position;
+                    avgPosition /= player.Units.Count;
+
+                    for (int i = 0; i < player.Units.Count; i++)
+                        player.Units[i].Position = avgPosition + poses[i];
+                }
             }
 
             StartTime = DateTime.Now;
