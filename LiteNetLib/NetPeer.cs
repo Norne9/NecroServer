@@ -153,7 +153,7 @@ namespace LiteNetLib
             _connectAttempts = 0;
             if (connectId == 0)
             {
-                _connectId = DateTime.UtcNow.Ticks;
+                _connectId = HiResDateTime.UtcNowTicks;
                 SendConnectRequest();
             }
             else
