@@ -7,6 +7,7 @@ namespace NecroServer
     {
         public int Port { get; set; } = 15364;
 
+        public int MaxUnitsPacket { get; set; } = 60;
         public int MaxUnitCount { get; set; } = 8;
         public int MaxPlayers { get; set; } = 30;
         public int UpdateDelay { get; set; } = 30;
@@ -16,7 +17,7 @@ namespace NecroServer
         public float EndWaitTime { get; set; } = 15f;
 
         public string DiscordLog { get; set; } = null;
-        public string ConnectionKey { get; set; } = "Release_v0.2";
+        public string ConnectionKey { get; set; } = "Release_v0.1";
         public int DiscordAll { get; set; } = 0;
 
         public string MasterServer { get; set; } = "http://85.143.173.253:8856/";

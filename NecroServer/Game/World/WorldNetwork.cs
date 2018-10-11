@@ -48,8 +48,10 @@ namespace Game
                 .Select((p) => p.Value.GetPlayerCameraInfo()).ToArray();
 
             var visibleUnits = OverlapUnits(player.AvgPosition, Config.ViewRange)
-                .Where((u) => u.Owner?.UnitsRune != RuneType.Stealth || u.Owner == player)
-                .Select((u) => u.GetUnitInfo(this, player)).ToArray();
+                .Where((u) => u.Owner?.UnitsRune != RuneType.Stealth || u.Owner == player);
+            if (visibleUnits.Count() > Config.MaxUnitsPacket)
+                visibleUnits = visibleUnits.OrderBy((u) => (u.Position - player.AvgPosition).SqrLength()).Take(Config.MaxUnitsPacket);
+            var visibleUnitsData = visibleUnits.Select((u) => u.GetUnitInfo(this, player)).ToArray();
 
             var visibleRunes = RunesTree.Overlap<Rune>(player.AvgPosition, Config.ViewRange)
                 .Select((r) => r.GetRuneInfo()).ToArray();
@@ -62,7 +64,7 @@ namespace Game
                 AlivePlayers = AlivePlayers,
                 Cooldown = player.GetCooldown(),
                 PlayerCameras = visiblePlayers,
-                Units = visibleUnits,
+                Units = visibleUnitsData,
                 Runes = visibleRunes
             };
         }
