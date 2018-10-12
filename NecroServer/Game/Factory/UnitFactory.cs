@@ -15,7 +15,7 @@ namespace Game
 
         private const float DefaultMoveSpeed = 4f;
         private const float DefaultViewRadius = 6f;
-        private const float DefaultAttackRange = 1.5f;
+        private const float DefaultAttackRange = 0.5f;
 
         private ushort CurrentUnitId;
         private readonly List<Unit> UnitProtos;

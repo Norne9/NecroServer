@@ -10,7 +10,7 @@ namespace Game
 {
     public class Player
     {
-        public long NetworkId { get; }
+        public int NetworkId { get; }
         public long UserId { get; }
         public bool IsAI { get => UserId < 0; }
         public string Name { get; }
@@ -33,7 +33,7 @@ namespace Game
 
         private readonly Config Config;
 
-        public Player(long userId, long netId, string name, bool doubleUnits, Config config)
+        public Player(long userId, int netId, string name, bool doubleUnits, Config config)
         {
             UserId = userId;
             NetworkId = netId;

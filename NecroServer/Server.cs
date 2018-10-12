@@ -20,8 +20,8 @@ namespace NecroServer
         private NetSerializer NetSerializer;
         
         private World World;
-        private Dictionary<long, Player> Players = new Dictionary<long, Player>();
-        private Dictionary<long, NetPeer> Peers = new Dictionary<long, NetPeer>();
+        private Dictionary<int, Player> Players = new Dictionary<int, Player>();
+        private Dictionary<int, NetPeer> Peers = new Dictionary<int, NetPeer>();
 
         private ServerState ServerState = ServerState.Started;
         private DateTime startTime = DateTime.Now;
@@ -72,8 +72,8 @@ namespace NecroServer
             }
 
             //create player
-            var player = new Player(clientData.UserId, peer.ConnectId, clientData.Name, clientData.DoubleUnits, Config);
-            Players.Add(peer.ConnectId, player);
+            var player = new Player(clientData.UserId, peer.GetUId(), clientData.Name, clientData.DoubleUnits, Config);
+            Players.Add(peer.GetUId(), player);
             if (Players.Count == 1)
             {
                 WaitTime = Config.PlayerWaitTime;
@@ -118,7 +118,7 @@ namespace NecroServer
 
         private void OnClientInput(ClientInput input, NetPeer peer)
         {
-            var res = World.SetInput(peer.ConnectId, input);
+            var res = World.SetInput(peer.GetUId(), input);
             if (!res) server.DisconnectPeer(peer);
         }
 
@@ -154,7 +154,7 @@ namespace NecroServer
         public async Task Run()
         {
             server.Start(Config.Port);
-            _ = Task.Run(() => MasterUpdate());
+            var masterUpdateTask = Task.Run(() => MasterUpdate());
             Logger.Log($"SERVER started on port {Config.Port}");
             while (Work)
             {
@@ -232,6 +232,8 @@ namespace NecroServer
             }
             server.Stop();
             Logger.Log($"SERVER stopped");
+            masterUpdateTask.Wait();
+            Logger.Log($"SERVER master update task stopped");
         }
 
         public void Stop(string reason)
@@ -244,9 +246,9 @@ namespace NecroServer
         {
             while (Work)
             {
+                await Task.Delay(Config.MasterUpdateDelay);
                 while (RequestQueue.TryDequeue(out Func<Task> action))
                     await action();
-                await Task.Delay(Config.MasterUpdateDelay);
                 await SendInfoToMaster();
             }
         }
@@ -260,8 +262,8 @@ namespace NecroServer
 
         public void OnPeerConnected(NetPeer peer) //Just add peer and wait for auth packet
         {
-            Logger.Log($"SERVER client {peer.ConnectId} connected");
-            Peers.Add(peer.ConnectId, peer);
+            Logger.Log($"SERVER client {peer.GetUId()} connected");
+            Peers.Add(peer.GetUId(), peer);
         }
 
         public void OnNetworkReceive(NetPeer peer, NetDataReader reader) //Receive packets
@@ -271,13 +273,13 @@ namespace NecroServer
 
         public async void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            Logger.Log($"SERVER client {peer.ConnectId} disconnected, reason: '{disconnectInfo.Reason}'");
-            Peers.Remove(peer.ConnectId);
+            Logger.Log($"SERVER client {peer.GetUId()} disconnected, reason: '{disconnectInfo.Reason}'");
+            Peers.Remove(peer.GetUId());
             if (ServerState == ServerState.Playing)
-                World.RemovePlayer(peer.ConnectId);
-            else if (Players.ContainsKey(peer.ConnectId))
+                World.RemovePlayer(peer.GetUId());
+            else if (Players.ContainsKey(peer.GetUId()))
             {
-                Players.Remove(peer.ConnectId);
+                Players.Remove(peer.GetUId());
                 SendPlayersInfo();
             }
 

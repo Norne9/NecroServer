@@ -28,7 +28,7 @@ namespace Game
             "DoLuX"
         };
         private static readonly int NameOffset = GameMath.MathF.RandomInt(0, 1000);
-        private static long AiUserId = -1;
+        private static int AiUserId = -1;
         public static Player GetAiPlayer(Config config)
         {
             var id = AiUserId--;

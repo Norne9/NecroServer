@@ -89,19 +89,23 @@ namespace Game
                     .OrderBy((u) => (Position - u.Position).SqrLength()) //Sort by distance
                     .FirstOrDefault();
                 if (target != null) lookDirection = (target.Position - Position); //Look at enemy
+                Attack = target != null; //Play attack animation
 
                 //We cant do anithing if we attack
                 if ((DateTime.Now - lastAttack).TotalSeconds > AttackDelay)
                 {
                     if (target != null) //We have target
                     {
-                        if ((target.Position - Position).SqrLength() > AttackRange * AttackRange) //We far
+                        var aRange = AttackRange + target.Radius + Radius; aRange *= aRange;
+                        if ((target.Position - Position).SqrLength() > aRange) //We far
+                        {
                             world.MoveUnit(this, CalcNewPos(target.Position, speed, world.DeltaTime)); //go
+                            Attack = false; //Disable attack animation
+                        }
                         else
                         {
                             if (Owner?.UnitsRune == RuneType.Stealth) //Remove stealth
                                 Owner.SetRune(RuneType.None);
-                            Attack = true; //Play attack animation
                             lastAttack = DateTime.Now;
                             target.TakeDamage(this, damage);
                         }
@@ -114,10 +118,7 @@ namespace Game
                     }
                 }
                 else
-                {
                     world.MoveUnit(this, Position); //stay
-                    Attack = true;
-                }
             }
             else //Just move
             {

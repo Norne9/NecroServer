@@ -10,7 +10,7 @@ namespace Game
 {
     public partial class World
     {
-        public void StartGame(Dictionary<long, Player> players)
+        public void StartGame(Dictionary<int, Player> players)
         {
             Players = players;
             Logger.Log($"GAME starting with {Players.Count} players");

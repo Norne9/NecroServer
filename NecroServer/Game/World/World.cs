@@ -12,7 +12,7 @@ namespace Game
         public event Action OnGameEnd;
         public event Action<long, PlayerStatus> OnPlayerDead;
 
-        private Dictionary<long, Player> Players;
+        private Dictionary<int, Player> Players;
 
         private readonly PhysicalObject[] Obstacles;
         private readonly Unit[] Units;

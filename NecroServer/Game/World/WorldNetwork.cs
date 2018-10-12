@@ -11,7 +11,7 @@ namespace Game
 {
     public partial class World
     {
-        public void RemovePlayer(long networkId)
+        public void RemovePlayer(int networkId)
         {
             if (Players.ContainsKey(networkId))
             {
@@ -21,12 +21,14 @@ namespace Game
                     Logger.Log($"GAME remove player '{player.Name}'");
                     for (int i = player.Units.Count - 1; i >= 0; i--)
                         player.Units[i].TakeDamage(null, player.Units[i].MaxHealth * 2f);
+                    player.PlayerStatus.Place = Config.MaxPlayers;
+                    OnPlayerDead?.Invoke(player.UserId, player.PlayerStatus);
                 }
                 Players.Remove(networkId);
             }
         }
 
-        public bool SetInput(long networkId, ClientInput input)
+        public bool SetInput(int networkId, ClientInput input)
         {
             if (Players == null) return true;
             if (Players.ContainsKey(networkId))
