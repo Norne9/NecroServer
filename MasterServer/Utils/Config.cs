@@ -9,6 +9,11 @@ namespace MasterServer
         public string DiscordLog { get; set; } = null;
         public string UserBasePath { get; set; } = "Users";
         public string UserBaseExt { get; set; } = ".usr";
+
+        public string ParamsFile { get; set; } = "Data/params.txt";
+        public string ShopFile { get; set; } = "Data/shop.json";
+        public string TextsFile { get; set; } = "Data/text.json";
+
         public float LeaderboardTime { get; set; } = 60f * 60f * 24f * 3f;
         public float ServerTime { get; set; } = 3f;
         public float DebugTime { get; set; } = 10f * 60f;

@@ -10,5 +10,6 @@ namespace MasterReqResp
         public string Name { get; set; } = "";
         public bool DoubleUnits { get; set; } = false;
         public long UserId { get; set; } = -1;
+        public Dictionary<byte, byte> UnitSkins = new Dictionary<byte, byte>();
     }
 }

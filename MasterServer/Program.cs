@@ -23,7 +23,8 @@ namespace MasterServer
             var config = new Config(args);
             Logger.Init(config.DiscordLog);
 
-            var userBase = new UserBase(config);
+            var masterData = new MasterData(config);
+            var userBase = new UserBase(config, masterData);
             var serverBase = new ServerBase(config);
 
             Task.Run(async () => //Debug task
@@ -54,6 +55,9 @@ namespace MasterServer
                         case "debug":
                             userBase.DebugUsers();
                             serverBase.DebugServers();
+                            break;
+                        case "reload":
+                            await masterData.Reload();
                             break;
                         default:
                             Logger.Log("CONSOLE unknown command");
@@ -88,16 +92,14 @@ namespace MasterServer
                         //ReqConfig
                         r.MapGet("config", async (request, response, routeData) =>
                         {
-                            var text = await File.ReadAllTextAsync("params.txt");
-                            var argums = text.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
-                            response.WriteJson(new RespConfig() { Args = argums });
+                            response.WriteJson(masterData.GetParams());
                         });
 
                         //ReqClient
                         r.MapPost("client", async (request, response, routeData) =>
                         {
                             var req = request.HttpContext.ReadFromJson<ReqClient>();
-                            response.WriteJson(userBase.GetClinetData(req));
+                            response.WriteJson(await userBase.GetClinetData(req, masterData.GetSkins()));
                         });
 
                         //ReqState
@@ -112,7 +114,7 @@ namespace MasterServer
                         r.MapPost("sendstatus", async (request, response, routeData) =>
                         {
                             var req = request.HttpContext.ReadFromJson<ReqSendStatus>();
-                            var resp = userBase.UpdateUserStatus(req);
+                            var resp = await userBase.UpdateUserStatus(req);
                             response.WriteJson(resp);
                         });
 
@@ -122,7 +124,7 @@ namespace MasterServer
                         r.MapPost("register", async (request, response, routeData) =>
                         {
                             var req = request.HttpContext.ReadFromJson<ReqRegister>();
-                            var resp = userBase.RegisterUser(req);
+                            var resp = await userBase.RegisterUser(req);
                             response.WriteJson(resp);
                         });
 
@@ -130,7 +132,7 @@ namespace MasterServer
                         r.MapPost("userstatus", async (request, response, routeData) =>
                         {
                             var req = request.HttpContext.ReadFromJson<ReqUserStatus>();
-                            var resp = userBase.GetUserStatus(req);
+                            var resp = await userBase.GetUserStatus(req);
                             if (resp == null)
                                 using (var writer = new HttpResponseStreamWriter(response.Body, Encoding.UTF8))
                                 { writer.WriteLine("empty"); }
@@ -142,7 +144,7 @@ namespace MasterServer
                         r.MapPost("leaderboard", async (request, response, routeData) =>
                         {
                             var req = request.HttpContext.ReadFromJson<ReqLeaderboard>();
-                            var resp = userBase.GetLeaderboard(req);
+                            var resp = await userBase.GetLeaderboard(req);
                             response.WriteJson(resp);
                         });
 
@@ -150,7 +152,7 @@ namespace MasterServer
                         r.MapPost("server", async (request, response, routeData) =>
                         {
                             var req = request.HttpContext.ReadFromJson<ReqServer>();
-                            userBase.SetDoubleUnits(req.UserId, req.DoubleUnits);
+                            await userBase.SetDoubleUnits(req.UserId, req.DoubleUnits);
                             var server = serverBase.FindServer(req.ServerVersion);
                             if (server != null)
                                 response.WriteJson(new RespServer() {
@@ -159,6 +161,22 @@ namespace MasterServer
                                 });
                             else
                                 response.WriteJson(new RespServer() { Address = "", Port = 0 });
+                        });
+
+                        //ReqMessages
+                        r.MapPost("messages", async (request, response, routeData) =>
+                        {
+                            var req = request.HttpContext.ReadFromJson<ReqMessages>();
+                            var resp = masterData.GetMessages(req);
+                            response.WriteJson(resp);
+                        });
+
+                        //ReqSkinInfo
+                        r.MapPost("skininfo", async (request, response, routeData) =>
+                        {
+                            var req = request.HttpContext.ReadFromJson<ReqSkinInfo>();
+                            var resp = await userBase.GetSkinInfo(req);
+                            response.WriteJson(resp);
                         });
                     });
                 })

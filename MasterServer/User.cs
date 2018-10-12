@@ -19,7 +19,7 @@ namespace MasterServer
         public DateTime LastGame { get; set; } = DateTime.Now.AddYears(-1);
 
         public Queue<int> GamePlaces { get; set; } = new Queue<int>();
-        public int Rating { get; set; } = 0;
+        public double Rating { get; set; } = 0;
         public int WorldPlace { get; set; } = 0;
 
         public int WinCount { get; set; } = 0;
@@ -38,9 +38,14 @@ namespace MasterServer
         public int TotalUnitRise { get; set; } = 0;
         public int TotalUnitKill { get; set; } = 0;
 
-        public User(Stream data)
+        public double Money { get; set; } = 0;
+        public List<long> OwnedSkins { get; set; } = new List<long>();
+        public List<long> SelectedSkins { get; set; } = new List<long>();
+
+        public User(byte[] data)
         {
-            using (var br = new BinaryReader(data))
+            using (var ms = new MemoryStream(data))
+            using (var br = new BinaryReader(ms))
             {
                 UserId = br.ReadInt64();
                 UserKey = br.ReadString();
@@ -68,13 +73,27 @@ namespace MasterServer
                 TotalDamageReceive = br.ReadDouble();
                 TotalUnitRise = br.ReadInt32();
                 TotalUnitKill = br.ReadInt32();
+
+                try
+                {
+                    Money = br.ReadDouble();
+                    int ownedSkinCount = br.ReadInt32();
+                    for (int i = 0; i < ownedSkinCount; i++)
+                        OwnedSkins.Add(br.ReadInt64());
+                    int selectedSkinCount = br.ReadInt32();
+                    for (int i = 0; i < selectedSkinCount; i++)
+                        SelectedSkins.Add(br.ReadInt64());
+                }
+                catch (Exception)
+                { Money = 100; }
             }
             WorldPlace = 0;
             Rating = GamePlaces.Select((p) => GetScore(p)).Sum();
         }
-        public void SaveUser(Stream stream)
+        public byte[] SaveUser()
         {
-            using (var bw = new BinaryWriter(stream))
+            using (var ms = new MemoryStream())
+            using (var bw = new BinaryWriter(ms))
             {
                 bw.Write(UserId);
                 bw.Write(UserKey);
@@ -102,6 +121,16 @@ namespace MasterServer
                 bw.Write(TotalDamageReceive);
                 bw.Write(TotalUnitRise);
                 bw.Write(TotalUnitKill);
+
+                bw.Write(Money);
+                bw.Write(OwnedSkins.Count);
+                foreach (var skin in OwnedSkins)
+                    bw.Write(skin);
+                bw.Write(SelectedSkins.Count);
+                foreach (var skin in SelectedSkins)
+                    bw.Write(skin);
+
+                return ms.ToArray();
             }
         }
 
@@ -110,6 +139,39 @@ namespace MasterServer
             UserId = uBase.UserNumber++;
             UserKey = Guid.NewGuid().ToString();
             UserName = name;
+        }
+
+        public void BuySkin(Skin skin)
+        {
+            if (skin == null) return;
+            if (OwnedSkins.Contains(skin.SkinId)) return;
+            if (Money > skin.Price)
+            {
+                Money -= skin.Price;
+                OwnedSkins.Add(skin.SkinId);
+            }
+        }
+        public List<SkinInfo> GetSkinInfo(List<Skin> skins) =>
+            skins.Select((s) => new SkinInfo()
+            {
+                Name = s.Name,
+                SkinId = s.SkinId,
+                UnitModel = s.UnitModel,
+                SkinMesh = s.SkinMesh,
+                Price = s.Price,
+                Owned = OwnedSkins.Contains(s.SkinId),
+                Selected = SelectedSkins.Contains(s.SkinId),
+            }).ToList();
+        public List<Skin> GetSelected(List<Skin> skins) =>
+            skins.Where((s) => SelectedSkins.Contains(s.SkinId)).ToList();
+        public void SelectSkin(Skin skin, List<Skin> skins)
+        {
+            if (skin == null) return;
+            if (!OwnedSkins.Contains(skin.SkinId)) return;
+            var unit = skin.UnitModel;
+            var selected = GetSelected(skins).Where((s) => s.UnitModel != unit).ToList();
+            selected.Add(skin);
+            SelectedSkins = selected.Select((s) => s.SkinId).ToList();
         }
 
         public void UpdateUser(ReqSendStatus status)
@@ -137,22 +199,17 @@ namespace MasterServer
 
             GameCount++;
             Rating = GamePlaces.Select((p) => GetScore(p)).Sum();
+            Money += Math.Max(0, GetScore(status.Place));
         }
 
-        private static int GetScore(int place)
+        private static double GetScore(int place)
         {
-            if (place <= 1)
-                return 10;
-            else if (place == 2)
-                return 5;
-            else if (place == 3)
-                return 3;
-            else if (place == 4)
-                return 2;
-            else if (place <= 10)
-                return 1;
-
-            return -1;
+            if (place > 5)
+                return -0.2 * place;
+            double score = 10;
+            for (int i = 1; i < place; i++)
+                score /= 2;
+            return score;
         }
     }
 }
