@@ -20,10 +20,4 @@
     <ProjectReference Include="..\MasterReqResp\MasterReqResp.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="params.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
