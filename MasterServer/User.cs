@@ -42,6 +42,8 @@ namespace MasterServer
         public List<long> OwnedSkins { get; set; } = new List<long>();
         public List<long> SelectedSkins { get; set; } = new List<long>();
 
+        public DateTime LastAdWatch { get; set; } = DateTime.Now.AddYears(-1);
+
         public User(byte[] data)
         {
             using (var ms = new MemoryStream(data))
@@ -74,7 +76,7 @@ namespace MasterServer
                 TotalUnitRise = br.ReadInt32();
                 TotalUnitKill = br.ReadInt32();
 
-                try
+                try //Version 2
                 {
                     Money = br.ReadDouble();
                     int ownedSkinCount = br.ReadInt32();
@@ -86,6 +88,13 @@ namespace MasterServer
                 }
                 catch (Exception)
                 { Money = 100; }
+
+                try //Version 3
+                {
+                    LastAdWatch = new DateTime(br.ReadInt64());
+                }
+                catch (Exception)
+                { LastAdWatch = DateTime.Now.AddYears(-1); }
             }
             WorldPlace = 0;
             Rating = GamePlaces.Select((p) => GetScore(p)).Sum();
@@ -122,6 +131,7 @@ namespace MasterServer
                 bw.Write(TotalUnitRise);
                 bw.Write(TotalUnitKill);
 
+                //Version 2
                 bw.Write(Money);
                 bw.Write(OwnedSkins.Count);
                 foreach (var skin in OwnedSkins)
@@ -129,6 +139,9 @@ namespace MasterServer
                 bw.Write(SelectedSkins.Count);
                 foreach (var skin in SelectedSkins)
                     bw.Write(skin);
+
+                //Version 3
+                bw.Write(LastAdWatch.Ticks);
 
                 return ms.ToArray();
             }

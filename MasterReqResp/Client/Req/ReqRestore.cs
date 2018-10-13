@@ -4,11 +4,8 @@ using System.Text;
 
 namespace MasterReqResp
 {
-    public enum ReqSkinCommand
+    public class ReqRestore
     {
-        Get,
-        Select,
-        Buy,
-        WatchAd
+        public string RestoreKey { get; set; } = "";
     }
 }

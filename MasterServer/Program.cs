@@ -46,11 +46,16 @@ namespace MasterServer
             {
                 while (true)
                 {
-                    string cmd = Console.ReadLine();
-                    switch (cmd)
+                    string[] cmd = Console.ReadLine().Split(' ');
+                    switch (cmd[0])
                     {
+                        case "set":
+                            var arg = cmd.Skip(1).ToArray();
+                            if (arg.Length == 2)
+                                config.AppendArgs(arg);
+                            break;
                         case "save":
-                            userBase.Save();
+                            await userBase.Save();
                             break;
                         case "debug":
                             userBase.DebugUsers();
@@ -79,6 +84,7 @@ namespace MasterServer
                     l.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
                     l.SetMinimumLevel(LogLevel.Warning);
                     l.AddConsole();
+                    l.AddProvider(new DiscordProvider());
                 })
                 .UseIISIntegration()
                 .ConfigureServices(s => s.AddRouting())
@@ -176,6 +182,14 @@ namespace MasterServer
                         {
                             var req = request.HttpContext.ReadFromJson<ReqSkinInfo>();
                             var resp = await userBase.GetSkinInfo(req);
+                            response.WriteJson(resp);
+                        });
+
+                        //ReqRestore
+                        r.MapPost("restore", async (request, response, routeData) =>
+                        {
+                            var req = request.HttpContext.ReadFromJson<ReqRestore>();
+                            var resp = await userBase.RestoreUser(req);
                             response.WriteJson(resp);
                         });
                     });

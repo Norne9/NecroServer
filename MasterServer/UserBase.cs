@@ -170,6 +170,7 @@ namespace MasterServer
             var user = await GetUser(reqSkinInfo.UserId);
             if (user == null) return new RespSkinInfo();
             var skin = MasterData.GetSkin(reqSkinInfo.SkinId);
+            var timeToAd = (float)Math.Max(0, Config.WatchAdTime - (DateTime.Now - user.LastAdWatch).TotalSeconds);
             switch (reqSkinInfo.Command)
             {
                 case ReqSkinCommand.Get:
@@ -177,6 +178,8 @@ namespace MasterServer
                     {
                         Skins = user.GetSkinInfo(MasterData.GetSkins()),
                         Money = (int)Math.Floor(user.Money),
+                        WaitAdTime = timeToAd,
+                        AdMoney = (int)Config.MoneyForAd,
                     };
                 case ReqSkinCommand.Select:
                     user.SelectSkin(skin, MasterData.GetSkins());
@@ -185,6 +188,8 @@ namespace MasterServer
                     {
                         Skins = user.GetSkinInfo(MasterData.GetSkins()),
                         Money = (int)Math.Floor(user.Money),
+                        WaitAdTime = timeToAd,
+                        AdMoney = (int)Config.MoneyForAd,
                     };
                 case ReqSkinCommand.Buy:
                     user.BuySkin(skin);
@@ -193,10 +198,54 @@ namespace MasterServer
                     {
                         Skins = user.GetSkinInfo(MasterData.GetSkins()),
                         Money = (int)Math.Floor(user.Money),
+                        WaitAdTime = timeToAd,
+                        AdMoney = (int)Config.MoneyForAd,
+                    };
+                case ReqSkinCommand.WatchAd:
+                    if (timeToAd <= 0)
+                    {
+                        user.Money += Config.MoneyForAd;
+                        user.LastAdWatch = DateTime.Now;
+                        timeToAd = Config.WatchAdTime;
+                        if (!Users.ContainsKey(user.UserId)) await SaveUser(user);
+                    }
+                    return new RespSkinInfo()
+                    {
+                        Skins = user.GetSkinInfo(MasterData.GetSkins()),
+                        Money = (int)Math.Floor(user.Money),
+                        WaitAdTime = timeToAd,
+                        AdMoney = (int)Config.MoneyForAd,
                     };
                 default:
                     return new RespSkinInfo();
             }
+        }
+        public async Task<RespRestore> RestoreUser(ReqRestore reqRestore)
+        {
+            string[] data = reqRestore.RestoreKey.Split('-');
+            if (data.Length != 3) return new RespRestore();
+
+            if (!byte.TryParse(data[0], System.Globalization.NumberStyles.HexNumber, null, out var b1))
+                return new RespRestore();
+            if (!long.TryParse(data[1], System.Globalization.NumberStyles.HexNumber, null, out var userId))
+                return new RespRestore();
+            if (!byte.TryParse(data[2], System.Globalization.NumberStyles.HexNumber, null, out var b2))
+                return new RespRestore();
+
+            var user = await GetUser(userId);
+            if (user == null)
+                return new RespRestore();
+
+            var guid = Guid.Parse(user.UserKey).ToByteArray();
+            if (guid[0] != b1 || guid[1] != b2)
+                return new RespRestore();
+
+            return new RespRestore()
+            {
+                Success = true,
+                UserId = userId,
+                UserKey = user.UserKey
+            };
         }
 
         private async Task UpdateUsers()
@@ -217,24 +266,32 @@ namespace MasterServer
                 user.WorldPlace = ++place;
         }
 
-        private async Task SaveUser(User user)
+        private async Task<bool> SaveUser(User user)
         {
             var dir = GetUserDir(user.UserId);
             var path = GetUserPath(user.UserId);
-            try
+            for (int i = 0; i < Config.MaxFileError; i++)
             {
-                if (!Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-                using (var file = File.Create(path))
+                try
                 {
-                    var data = user.SaveUser();
-                    await file.WriteAsync(data, 0, data.Length);
+                    if (!Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
+                    using (var file = File.Create(path))
+                    {
+                        var data = user.SaveUser();
+                        await file.WriteAsync(data, 0, data.Length);
+                    }
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    if (i == Config.MaxFileError - 1)
+                        Logger.Log($"BASE file '{path}' save error:\n{e.ToString()}", true);
+                    else
+                        await Task.Delay(Config.WaitFileError);
                 }
             }
-            catch (Exception e)
-            {
-                Logger.Log($"BASE file '{path}' save error:\n{e.ToString()}", true);
-            }
+            return false;
         }
         private async Task<User> GetUser(long userId)
         {
@@ -248,17 +305,23 @@ namespace MasterServer
                     Logger.Log($"BASE file '{path}' not found", true);
                     return null;
                 }
-                try
+                for (int i = 0; i < Config.MaxFileError; i++)
                 {
-                    var data = await File.ReadAllBytesAsync(path);
-                    return new User(data);
-                }
-                catch (Exception e)
-                {
-                    Logger.Log($"BASE file '{path}' read error:\n{e.ToString()}", true);
-                    return null;
+                    try
+                    {
+                        var data = await File.ReadAllBytesAsync(path);
+                        return new User(data);
+                    }
+                    catch (Exception e)
+                    {
+                        if (i == Config.MaxFileError - 1)
+                            Logger.Log($"BASE file '{path}' read error:\n{e.ToString()}", true);
+                        else
+                            await Task.Delay(Config.WaitFileError);
+                    }
                 }
             }
+            return null;
         }
 
         private string GetUserDir(long userId)
@@ -272,14 +335,15 @@ namespace MasterServer
             return Path.Combine(Config.UserBasePath, bytes[0].ToString("X"), bytes[1].ToString("X"), userId.ToString("X") + Config.UserBaseExt);
         }
 
-        public void Save()
+        public async Task Save()
         {
             Logger.Log("BASE saving");
+            int saved = 0;
             foreach (var (userId, user) in Users)
-                SaveUser(user).Wait();
-            Logger.Log("BASE saving done");
+                saved += await SaveUser(user) ? 1 : 0;
+            Logger.Log($"BASE saving done: {saved}/{Users.Count}");
         }
         public void Dispose() =>
-            Save();
+            Save().Wait();
     }
 }

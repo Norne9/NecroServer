@@ -17,7 +17,12 @@ namespace MasterServer
         public float LeaderboardTime { get; set; } = 60f * 60f * 24f * 3f;
         public float ServerTime { get; set; } = 3f;
         public float DebugTime { get; set; } = 10f * 60f;
+        public float WatchAdTime { get; set; } = 15f * 60f;
+        public float MoneyForAd { get; set; } = 10f;
+
         public int MaxNameLenght { get; set; } = 16;
+        public int MaxFileError { get; set; } = 3;
+        public int WaitFileError { get; set; } = 100;
 
         public Config(string[] args)
         {
