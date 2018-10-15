@@ -2,23 +2,24 @@
 using NecroServer;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Game
 {
     public class UnitFactory
     {
-        private const byte MeshTroll  = 0;
-        private const byte MeshOrk    = 1;
-        private const byte MeshBear   = 2;
-        private const byte MeshZombie = 3;
+        public const byte MeshTroll = 0;
+        public const byte MeshOrk = 1;
+        public const byte MeshBear = 2;
+        public const byte MeshZombie = 3;
 
         private const float DefaultMoveSpeed = 4f;
         private const float DefaultViewRadius = 6f;
         private const float DefaultAttackRange = 0.5f;
 
         private ushort CurrentUnitId;
-        private readonly List<Unit> UnitProtos;
+        private readonly List<ConstructorInfo> UnitProtos;
         private readonly Config Config;
 
         public UnitFactory(Config config)
@@ -26,16 +27,28 @@ namespace Game
             CurrentUnitId = 0;
             Config = config;
 
-            var troll = new Unit(config, 0, MeshTroll, 100f, DefaultMoveSpeed, 1.33f, DefaultViewRadius, DefaultAttackRange, 10f, 1.33f);
-            var ork = new Unit(config, 0, MeshOrk, 150f, DefaultMoveSpeed, 0.76f, DefaultViewRadius, DefaultAttackRange, 10f, 1.33f);
-            var bear = new Unit(config, 0, MeshBear, 250f, DefaultMoveSpeed, 0.83f, DefaultViewRadius, DefaultAttackRange, 16f, 1.33f);
-            var zombie = new Unit(config, 0, MeshZombie, 100f, DefaultMoveSpeed, 0.66f, DefaultViewRadius, DefaultAttackRange, 9f, 1.33f);
+            var constructorTypes = new Type[] { typeof(Config), typeof(ushort) };
 
-            UnitProtos = new List<Unit>()
-            { troll, troll, troll, zombie, zombie, zombie, ork, ork, bear, };
+            var troll = typeof(UnitTroll).GetConstructor(constructorTypes);
+            var ork = typeof(UnitOrk).GetConstructor(constructorTypes);
+            var bear = typeof(UnitBear).GetConstructor(constructorTypes);
+            var zombie = typeof(UnitZombie).GetConstructor(constructorTypes);
+
+            UnitProtos = new List<ConstructorInfo>();
+            void AddByChance(ConstructorInfo unitType, int chance)
+            {
+                for (int i = 0; i < chance; i++)
+                    UnitProtos.Add(unitType);
+            }
+
+            AddByChance(troll, 4);
+            AddByChance(zombie, 3);
+            AddByChance(ork, 2);
+            AddByChance(bear, 1);
         }
 
         public Unit MakeUnit() =>
-            new Unit(Config, CurrentUnitId++, UnitProtos[GameMath.MathF.RandomInt(0, UnitProtos.Count)]);
+            (Unit)UnitProtos[GameMath.MathF.RandomInt(0, UnitProtos.Count)]
+            .Invoke(new object[] { Config, CurrentUnitId++ });
     }
 }

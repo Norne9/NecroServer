@@ -20,7 +20,7 @@ namespace Game
                 {
                     Logger.Log($"GAME remove player '{player.Name}'");
                     for (int i = player.Units.Count - 1; i >= 0; i--)
-                        player.Units[i].TakeDamage(null, player.Units[i].MaxHealth * 2f);
+                        player.Units[i].TakeDamage(null, float.MaxValue);
                     player.PlayerStatus.Place = Config.MaxPlayers;
                     OnPlayerDead?.Invoke(player.UserId, player.PlayerStatus);
                 }
@@ -46,11 +46,12 @@ namespace Game
         public ServerFrame GetServerFrame(Player player)
         {
             var visiblePlayers = Players.Where((p) => p.Value == player ||
-                    (p.Value.IsAlive && p.Value.UnitsRune != RuneType.Stealth && (p.Value.AvgPosition - player.AvgPosition).SqrLength() < Config.ViewRange * Config.ViewRange))
+                    (p.Value.IsAlive && (p.Value.UnitsEffect?.StatsChange.UnitVisible ?? true) &&
+                    (p.Value.AvgPosition - player.AvgPosition).SqrLength() < Config.ViewRange * Config.ViewRange))
                 .Select((p) => p.Value.GetPlayerCameraInfo()).ToArray();
 
             var visibleUnits = OverlapUnits(player.AvgPosition, Config.ViewRange)
-                .Where((u) => u.Owner?.UnitsRune != RuneType.Stealth || u.Owner == player);
+                .Where((u) => u.CurrentStats.UnitVisible || u.Owner == player);
             if (visibleUnits.Count() > Config.MaxUnitsPacket)
                 visibleUnits = visibleUnits.OrderBy((u) => (u.Position - player.AvgPosition).SqrLength()).Take(Config.MaxUnitsPacket);
             var visibleUnitsData = visibleUnits.Select((u) => u.GetUnitInfo(this, player)).ToArray();

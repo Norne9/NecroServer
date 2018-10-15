@@ -19,7 +19,7 @@ namespace Game
 
         public List<Unit> Units { get; private set; } = new List<Unit>();
         public Vector2 AvgPosition { get; private set; } = new Vector2(0, 0);
-        public RuneType UnitsRune { get; private set; } = RuneType.None;
+        public Effect UnitsEffect { get; private set; } = null;
 
         public readonly PlayerStatus PlayerStatus = new PlayerStatus();
 
@@ -27,7 +27,6 @@ namespace Game
         public Vector2 SmallInput { get; private set; } = new Vector2(0, 1);
         private bool InputRise = false;
 
-        private DateTime LastRune = DateTime.Now;
         private DateTime LastRise = DateTime.Now.AddYears(-1);
         private int RiseCount = 0;
 
@@ -65,9 +64,9 @@ namespace Game
             if (!IsAlive) return;
             PlayerStatus.AliveTime += world.DeltaTime;
 
-            //Check rune time
-            if (UnitsRune != RuneType.None && (DateTime.Now - LastRune).TotalSeconds > Config.RuneTime)
-                UnitsRune = RuneType.None;
+            //Check effect time
+            if (UnitsEffect != null && DateTime.Now > UnitsEffect.EndTime)
+                UnitsEffect = null;
 
             //Check rise or heal
             if (InputRise && GetCooldown() < 0.001f)
@@ -142,10 +141,22 @@ namespace Game
             return result;
         }
 
-        public void SetRune(RuneType rune)
+
+        public void UnitAttack()
         {
-            LastRune = DateTime.Now;
-            UnitsRune = rune;
+            if (UnitsEffect != null && UnitsEffect.RemoveByAttack)
+                UnitsEffect = null;
+        }
+
+        public void UnitDamage()
+        {
+            if (UnitsEffect != null && UnitsEffect.RemoveByDamage)
+                UnitsEffect = null;
+        }
+
+        public void TakeRune(Rune rune)
+        {
+            UnitsEffect = rune.GetEffect();
         }
     }
 }

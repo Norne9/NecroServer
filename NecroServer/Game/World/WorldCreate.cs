@@ -95,10 +95,10 @@ namespace Game
                 Vector2 pos;
                 for (int n = 0; n < MaxTryCount; n++)
                 {
-                    pos = GetPointInCircle(WorldScale * Config.RuneRange);
-                    obj.Radius = WorldScale / 3f;
+                    pos = GetPointInCircle(ZoneRadius * Config.RuneRange);
+                    obj.Radius = ZoneRadius / 3f;
                     if (!obj.TryMove(pos, tree)) continue;
-                    obj.Radius = RuneFactory.RuneRadius;
+                    obj.Radius = Rune.RuneRadius;
 
                     if (obj.TryMove(pos, tree, ObstaclesTree, UnitsTree))
                         break;

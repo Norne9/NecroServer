@@ -16,7 +16,7 @@ namespace NecroServer
         public float EndWaitTime { get; set; } = 15f;
 
         public string DiscordLog { get; set; } = null;
-        public string ConnectionKey { get; set; } = "Release_v0.1";
+        public string ConnectionKey { get; set; } = "Release_v0.2";
         public int DiscordAll { get; set; } = 0;
 
         public string MasterServer { get; set; } = "http://85.143.173.253:8856/";

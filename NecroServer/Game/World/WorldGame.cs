@@ -70,7 +70,7 @@ namespace Game
             if (AlivePlayers == 1)
             {
                 foreach (var unit in Units)
-                    unit.TakeDamage(null, unit.MaxHealth * 2f);
+                    unit.TakeDamage(null, float.MaxValue);
             }
 
             //Update players

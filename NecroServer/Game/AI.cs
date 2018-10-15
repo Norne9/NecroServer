@@ -39,7 +39,7 @@ namespace Game
         public static void MakeStep(Config config, Player player, World world)
         {
             var nearUnits = world.OverlapUnits(player.AvgPosition, config.ViewRange);
-            var enemyUnits = world.OverlapUnits(player.AvgPosition, player.Units.FirstOrDefault()?.ViewRadius ?? 1f)
+            var enemyUnits = world.OverlapUnits(player.AvgPosition, player.Units.FirstOrDefault()?.CurrentStats.ViewRadius ?? 1f)
                 .Where((u) => u.Owner != null && u.Owner != player);
             var neutralUnits = world.OverlapUnits(player.AvgPosition, config.RiseRadius).Where((u) => u.Owner == null);
 

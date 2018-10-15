@@ -16,28 +16,26 @@ namespace Game
         public ushort UnitId { get; }
 
         public byte UnitMesh { get; }
-        public float MaxHealth { get; }
-        public float MoveSpeed { get; }
-        public float AttackDelay { get; }
-        public float RiseTime { get; }
-        public float ViewRadius { get; }
-        public float AttackRange { get; }
-        public float Damage { get; }
-        
+        public UnitStats UnitStats { get; }
+        public UnitStats CurrentStats { get; private set; }
+
         public float Health { get; private set; } = 0f;
         public bool IsAlive { get => Health > 0f; }
         public Player Owner { get; private set; } = null;
-        public bool Attack { get; private set; } = false;
+        public bool AttackAnimation { get; private set; } = false;
+
+        private readonly List<Effect> UnitEffects = new List<Effect>();
 
         private float Rotation = 0f;
         private bool AttackCommnd = false;
+        private Unit MyTarget = null;
 
         private DateTime lastAttack = DateTime.Now;
         private DateTime lastRise = DateTime.Now;
 
         private readonly Config Config;
 
-        public Unit(Config config, ushort id, byte mesh, float maxHealth, float moveSpeed, float attackDelay, float viewRadius, float attackRange, float damage, float riseTime)
+        public Unit(Config config, ushort id, byte mesh, UnitStats stats)
         {
             Config = config;
             Radius = 0.5f;
@@ -45,18 +43,10 @@ namespace Game
             UnitId = id;
 
             UnitMesh = mesh;
-            MaxHealth = maxHealth;
-            MoveSpeed = moveSpeed;
-            AttackDelay = attackDelay;
-            ViewRadius = viewRadius;
-            AttackRange = attackRange;
-            RiseTime = riseTime;
-            Damage = damage;
-        }
+            CurrentStats = UnitStats = stats;
 
-        public Unit(Config config, ushort id, Unit proto) : this(config, id,
-            proto.UnitMesh, proto.MaxHealth, proto.MoveSpeed, proto.AttackDelay, proto.ViewRadius, proto.AttackRange, proto.Damage, proto.RiseTime)
-        { Rotation = GameMath.MathF.RandomFloat(0f, GameMath.MathF.PI / 2f); }
+            Rotation = GameMath.MathF.RandomFloat(0f, GameMath.MathF.PI / 2f);
+        }
 
         public UnitInfo GetUnitInfo(World world, Player player) =>
             new UnitInfo()
@@ -66,53 +56,49 @@ namespace Game
                 PosX = (short)(Position.X / world.WorldScale * short.MaxValue),
                 PosY = (short)(Position.Y / world.WorldScale * short.MaxValue),
                 Rot = (byte)((Rotation > 0 ? Rotation : Rotation + GameMath.MathF.PI * 2f) / GameMath.MathF.PI / 2f * byte.MaxValue),
-                Health = (byte)(Health / MaxHealth * byte.MaxValue),
-                Rune = Owner?.UnitsRune ?? RuneType.None,
-                Attack = Attack,
+                Health = (byte)(Health / CurrentStats.MaxHealth * byte.MaxValue),
+                Rune = Owner?.UnitsEffect?.VisualEffect ?? Effect.GetVisual(UnitEffects),
+                Attack = AttackAnimation,
                 PlayerOwned = Owner == player
             };
 
         public void Update(World world, Vector2 cmdPos, bool cmdAttack)
         {
             if (!IsAlive) return;
-            if ((DateTime.Now - lastRise).TotalSeconds < RiseTime) return;
-
-            var (damage, speed) = ApplyRune();
+            CurrentStats = ApplyEffects(); //Process & apply effects
+            if ((DateTime.Now - lastRise).TotalSeconds < CurrentStats.RiseTime) return; //We rising - don't do anything
 
             var lookDirection = CalcLook(); //Default look direction
-            Attack = false; //Reset attack
+            AttackAnimation = false; //Reset attack
             AttackCommnd = cmdAttack;
             if (cmdAttack) //Find target and attack or stay calm
             {
-                var target = world.OverlapUnits(Position, ViewRadius)
-                    .Where((u) => u.Owner != Owner && u.Owner != null && u.Owner.UnitsRune != RuneType.Stealth) //Find other player unit
-                    .OrderBy((u) => (Position - u.Position).SqrLength()) //Sort by distance
-                    .FirstOrDefault();
-                if (target != null) lookDirection = (target.Position - Position); //Look at enemy
-                Attack = target != null; //Play attack animation
+                MyTarget = SelectTarget(world);
+                if (MyTarget != null) lookDirection = (MyTarget.Position - Position); //Look at enemy
+                AttackAnimation = MyTarget != null; //Play attack animation
 
                 //We cant do anithing if we attack
-                if ((DateTime.Now - lastAttack).TotalSeconds > AttackDelay)
+                if ((DateTime.Now - lastAttack).TotalSeconds > CurrentStats.AttackDelay)
                 {
-                    if (target != null) //We have target
+                    if (MyTarget != null) //We have target
                     {
-                        var aRange = AttackRange + target.Radius + Radius; aRange *= aRange;
-                        if ((target.Position - Position).SqrLength() > aRange) //We far
+                        var aRange = CurrentStats.AttackRange + MyTarget.Radius + Radius; aRange *= aRange;
+                        if ((MyTarget.Position - Position).SqrLength() > aRange) //We far
                         {
-                            world.MoveUnit(this, CalcNewPos(target.Position, speed, world.DeltaTime)); //go
-                            Attack = false; //Disable attack animation
+                            world.MoveUnit(this, CalcNewPos(MyTarget.Position, CurrentStats.MoveSpeed, world.DeltaTime)); //go
+                            AttackAnimation = false; //Disable attack animation
                         }
                         else
                         {
-                            if (Owner?.UnitsRune == RuneType.Stealth) //Remove stealth
-                                Owner.SetRune(RuneType.None);
+                            Effect.RemoveAttack(UnitEffects);
+                            Owner?.UnitAttack();
                             lastAttack = DateTime.Now;
-                            target.TakeDamage(this, damage);
+                            AttackUnit(MyTarget);
                         }
                     }
                     else //No target - Just move
                     {
-                        var tPos = CalcNewPos(cmdPos, speed, world.DeltaTime);
+                        var tPos = CalcNewPos(cmdPos, CurrentStats.MoveSpeed, world.DeltaTime);
                         lookDirection = (tPos - Position);
                         world.MoveUnit(this, tPos);
                     }
@@ -122,55 +108,52 @@ namespace Game
             }
             else //Just move
             {
-                var tPos = CalcNewPos(cmdPos, speed, world.DeltaTime);
+                var tPos = CalcNewPos(cmdPos, CurrentStats.MoveSpeed, world.DeltaTime);
                 lookDirection = (tPos - Position);
                 world.MoveUnit(this, tPos);
             }
 
             //Take rune
             var rune = world.TakeRune(this);
-            if (rune != RuneType.None)
-                Owner.SetRune(rune);
+            if (rune != null) Owner.TakeRune(rune);
 
             //Apply damage from zone
             if (Position.SqrLength() > world.ZoneRadius * world.ZoneRadius)
                 TakeDamage(null, Config.ZoneDps * world.DeltaTime);
-            //Instakil outside world
-            if (Position.SqrLength() > world.WorldScale * world.WorldScale)
-                TakeDamage(null, MaxHealth * 2f);
 
             //Calculate rotation
             if (lookDirection.SqrLength() < 0.001f)
                 lookDirection = CalcLook();
             Rotation = System.MathF.Atan2(lookDirection.X, lookDirection.Y);
+
+            //Apply health change
+            if (CurrentStats.HealthPerSecond != 0)
+                TakeDamage(this, -CurrentStats.HealthPerSecond);
         }
 
-        private Vector2 CalcLook() =>
-            Owner?.SmallInput ?? new Vector2(0, 1);
-
-        private (float dmg, float spd) ApplyRune()
+        protected virtual Unit SelectTarget(World world)
         {
-            var damage = Damage;
-            var speed = MoveSpeed;
-            switch (Owner.UnitsRune)
-            {
-                case RuneType.Damage:
-                    damage *= 2f;
-                    break;
-                case RuneType.Haste:
-                    speed *= 2f;
-                    break;
-            }
-            return (damage, speed);
+            return world.OverlapUnits(Position, CurrentStats.ViewRadius)
+                    .Where((u) => u.Owner != Owner && u.Owner != null && u.CurrentStats.UnitVisible) //Find other player unit
+                    .OrderBy((u) => (Position - u.Position).SqrLength()) //Sort by distance
+                    .FirstOrDefault();
         }
 
-        private Vector2 CalcNewPos(Vector2 target, float speed, float dt)
+        protected virtual void AttackUnit(Unit target)
         {
-            var vec = (target - Position);
-            var tpDst = speed * dt;
-            if (vec.SqrLength() < tpDst * tpDst) //We near target - teleport
-                return target;
-            return Position + vec.Normalize() * dt * speed;
+            target.TakeDamage(this, CurrentStats.Damage);
+        }
+
+        private UnitStats ApplyEffects()
+        {
+            var result = new UnitStats(UnitStats);
+            Effect.ProcessEffects(UnitEffects);
+            foreach (var effect in UnitEffects)
+                result *= effect.StatsChange;
+            if (Owner?.UnitsEffect != null)
+                result *= Owner.UnitsEffect.StatsChange;
+
+            return result;
         }
 
         public void Rise(Player player)
@@ -179,7 +162,7 @@ namespace Game
                 return;
 
             Logger.Log($"GAME player '{player.Name}' rised unit {UnitId}");
-            Health = MaxHealth;
+            Health = CurrentStats.MaxHealth;
             Owner = player;
             player.Units.Add(this);
 
@@ -189,51 +172,71 @@ namespace Game
 
         public void Heal()
         {
-            if (Health < MaxHealth)
-                Health += MaxHealth * Config.HealValue;
-            if (Health > MaxHealth)
-                Health = MaxHealth;
+            if (Health < CurrentStats.MaxHealth)
+                Health += CurrentStats.MaxHealth * Config.HealValue;
+            if (Health > CurrentStats.MaxHealth)
+                Health = CurrentStats.MaxHealth;
         }
 
         public void TakeDamage(Unit damager, float damage)
         {
             if (!IsAlive) return;
             damage *= GameMath.MathF.RandomFloat(1f - Config.RandomDamage / 2f, 1f + Config.RandomDamage / 2f);
-            Health -= damage;
+            damage *= CurrentStats.TakeDamageMultiplier;
 
+            Health -= damage;
+            if (Health > CurrentStats.MaxHealth)
+                Health = CurrentStats.MaxHealth;
+
+            damage = System.MathF.Max(0, System.MathF.Min(damage, CurrentStats.MaxHealth));
             if (damager?.Owner != null)
                 damager.Owner.PlayerStatus.DamageDeal += damage;
 
             if (Owner != null)
                 Owner.PlayerStatus.DamageReceive += damage;
 
-            if (Owner?.UnitsRune == RuneType.Stealth) //Remove stealth
-                Owner.SetRune(RuneType.None);
+            Owner?.UnitDamage();
+            Effect.RemoveDamage(UnitEffects);
 
             if (!IsAlive) //Die
             {
                 Health = 0f;
+                UnitEffects.Clear();
                 if (damager == null)
                     Logger.Log($"GAME unit {UnitId}@{Owner?.Name ?? "null"} killed by zone");
                 else
                     Logger.Log($"GAME unit {damager.UnitId}@{damager.Owner?.Name ?? "null"} killed {UnitId}@{Owner?.Name ?? "null"}");
                 Owner?.Units.Remove(this);
                 Owner = null;
-                Attack = false;
+                AttackAnimation = false;
 
                 if (damager?.Owner != null)
                     damager.Owner.PlayerStatus.UnitKill++;
             }
         }
 
+        public void TakeEffect(Effect effect) =>
+            Effect.AddEffect(UnitEffects, effect);
+
+        #region UnitMovement
+
+        private Vector2 CalcLook() =>
+            Owner?.SmallInput ?? new Vector2(0, 1);
+        private Vector2 CalcNewPos(Vector2 target, float speed, float dt)
+        {
+            var vec = (target - Position);
+            var tpDst = speed * dt;
+            if (vec.SqrLength() < tpDst * tpDst) //We near target - teleport
+                return target;
+            return Position + vec.Normalize() * dt * speed;
+        }
         public void Move(Vector2 newPosition, float dt, params OcTree[] trees)
         {
             Position = newPosition;
 
             if (CheckIntersect(trees, out Vector2 vec, out float pushPower))
-                Position = CalcNewPos(Position + (Position - vec), MoveSpeed * (AttackCommnd ? 2.0f : pushPower), dt);
+                Position = CalcNewPos(Position + (Position - vec), CurrentStats.MoveSpeed * (AttackCommnd ? 2.0f : pushPower), dt);
         }
-
         private bool CheckIntersect(OcTree[] trees, out Vector2 result, out float pushPower)
         {
             result = Vector2.Empty;
@@ -264,5 +267,7 @@ namespace Game
             result /= poses.Count;
             return true;
         }
+
+        #endregion
     }
 }
