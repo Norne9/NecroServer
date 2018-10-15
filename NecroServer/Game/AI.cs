@@ -57,7 +57,7 @@ namespace Game
             bool rise = neutralUnits.Count() > 0;
             bool goCenter = !fight && player.AvgPosition.SqrLength() * 1.3f > world.ZoneRadius * world.ZoneRadius;
 
-            var rndDir = RandomPosition.GetRandomPosition(byte.MaxValue);
+            var rndDir = RandomPosition.GetRandomPosition(byte.MaxValue + player.NetworkId);
             Vector2 inputDir = (nearUnits.Where((u) => u.Owner == null).FirstOrDefault()?.Position ?? rndDir) - player.AvgPosition;
             if (player.GetCooldown() > 0f) inputDir = rndDir;
             if (enemyUnits.Any())

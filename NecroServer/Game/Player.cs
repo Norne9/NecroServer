@@ -69,7 +69,7 @@ namespace Game
             for (int i = Units.Count - 1; i >= 0; i--)
             {
                 //Update unit
-                Units[i].Update(world, Units[i].Position + RandomPosition.GetRandomPosition() * 2f, true);
+                Units[i].Update(world, Units[i].Position + RandomPosition.GetRandomPosition(Units[i].UnitId) * 2f, true);
             }
             AvgPosition = new Vector2(-1000, -1000);
         }
