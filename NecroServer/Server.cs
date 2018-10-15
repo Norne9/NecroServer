@@ -13,41 +13,41 @@ namespace NecroServer
 {
     class Server : INetEventListener
     {
-        private readonly NetManager server;
-        private bool Work = true;
-        private readonly Config Config;
-        private readonly MasterClient MasterClient;
-        private NetSerializer NetSerializer;
+        private readonly NetManager _server;
+        private bool _work = true;
+        private readonly Config _config;
+        private readonly MasterClient _masterClient;
+        private NetSerializer _netSerializer;
         
-        private World World;
-        private Dictionary<int, Player> Players = new Dictionary<int, Player>();
-        private Dictionary<int, NetPeer> Peers = new Dictionary<int, NetPeer>();
+        private World _world;
+        private Dictionary<int, Player> _players = new Dictionary<int, Player>();
+        private Dictionary<int, NetPeer> _peers = new Dictionary<int, NetPeer>();
 
-        private ServerState ServerState = ServerState.Started;
-        private DateTime startTime = DateTime.Now;
-        private float WaitTime = 0f;
+        private ServerState _serverState = ServerState.Started;
+        private DateTime _startTime = DateTime.Now;
+        private float _waitTime = 0f;
 
-        private ConcurrentQueue<Func<Task>> RequestQueue = new ConcurrentQueue<Func<Task>>();
+        private ConcurrentQueue<Func<Task>> _requestQueue = new ConcurrentQueue<Func<Task>>();
 
         public Server(Config config, MasterClient masterClient)
         {
             Logger.Log($"SERVER creating...");
-            MasterClient = masterClient;
-            Config = config;
-            server = new NetManager(this, Config.MaxPlayers, Config.ConnectionKey)
+            _masterClient = masterClient;
+            _config = config;
+            _server = new NetManager(this, _config.MaxPlayers, _config.ConnectionKey)
             {
-                UpdateTime = Config.UpdateDelay,
+                UpdateTime = _config.UpdateDelay,
             };
 
             Logger.Log($"SERVER register packets");
-            NetSerializer = new NetSerializer();
-            Packet.Register(NetSerializer);
-            NetSerializer.SubscribeReusable<ClientConnection, NetPeer>(OnClientConnection);
-            NetSerializer.SubscribeReusable<ClientInput, NetPeer>(OnClientInput);
+            _netSerializer = new NetSerializer();
+            Packet.Register(_netSerializer);
+            _netSerializer.SubscribeReusable<ClientConnection, NetPeer>(OnClientConnection);
+            _netSerializer.SubscribeReusable<ClientInput, NetPeer>(OnClientInput);
 
-            World = new World(Config);
-            World.OnGameEnd += World_OnGameEnd;
-            World.OnPlayerDead += World_OnPlayerDead;
+            _world = new World(_config);
+            _world.OnGameEnd += World_OnGameEnd;
+            _world.OnPlayerDead += World_OnPlayerDead;
 
             Logger.Log($"SERVER created");
         }
@@ -55,41 +55,41 @@ namespace NecroServer
         private async void OnClientConnection(ClientConnection clientConnection, NetPeer peer)
         {
             //check game state
-            if (ServerState == ServerState.Playing || ServerState == ServerState.EndGame)
+            if (_serverState == ServerState.Playing || _serverState == ServerState.EndGame)
             {
                 Logger.Log($"SERVER connection attempt during game: {clientConnection.UserId}");
-                server.DisconnectPeer(peer);
+                _server.DisconnectPeer(peer);
                 return;
             }
 
             //check player
-            var clientData = await MasterClient.RequestClientInfo(clientConnection.UserId, clientConnection.UserKey);
+            var clientData = await _masterClient.RequestClientInfo(clientConnection.UserId, clientConnection.UserKey);
             if (!clientData.Valid)
             {
                 Logger.Log($"SERVER invalid connection attempt: {clientConnection.UserId}");
-                server.DisconnectPeer(peer);
+                _server.DisconnectPeer(peer);
                 return;
             }
 
             //create player
-            var player = new Player(clientData.UserId, peer.GetUId(), clientData.Name, clientData.DoubleUnits, Config);
-            Players.Add(peer.GetUId(), player);
-            if (Players.Count == 1)
+            var player = new Player(clientData.UserId, peer.GetUId(), clientData.Name, clientData.DoubleUnits, _config);
+            _players.Add(peer.GetUId(), player);
+            if (_players.Count == 1)
             {
-                WaitTime = Config.PlayerWaitTime;
-                ServerState = ServerState.WaitingPlayers;
+                _waitTime = _config.PlayerWaitTime;
+                _serverState = ServerState.WaitingPlayers;
             }
 
             //send map
-            peer.Send(NetSerializer.Serialize(World.GetServerMap()), SendOptions.ReliableUnordered);
+            peer.Send(_netSerializer.Serialize(_world.GetServerMap()), SendOptions.ReliableUnordered);
 
             //add time
-            if (WaitTime < Config.MinWaitTime)
-                WaitTime = Config.MinWaitTime;
+            if (_waitTime < _config.MinWaitTime)
+                _waitTime = _config.MinWaitTime;
 
             //min time if last player
-            if (Players.Count >= Config.MaxPlayers && WaitTime > Config.MinWaitTime)
-                WaitTime = Config.MinWaitTime;
+            if (_players.Count >= _config.MaxPlayers && _waitTime > _config.MinWaitTime)
+                _waitTime = _config.MinWaitTime;
 
             //send player info
             Logger.Log($"SERVER player '{player.Name}' connected");
@@ -103,14 +103,14 @@ namespace NecroServer
         {
             var packet = new ServerPlayers()
             {
-                WaitTime = WaitTime,
-                Players = Players.Values.Select((p) => p.GetPlayerInfo()).ToArray(),
+                WaitTime = _waitTime,
+                Players = _players.Values.Select((p) => p.GetPlayerInfo()).ToArray(),
             };
-            var data = NetSerializer.Serialize(packet);
-            foreach (var (netId, player) in Players)
+            var data = _netSerializer.Serialize(packet);
+            foreach (var (netId, player) in _players)
             {
-                if (Peers.ContainsKey(netId))
-                    Peers[netId].Send(data, SendOptions.ReliableUnordered);
+                if (_peers.ContainsKey(netId))
+                    _peers[netId].Send(data, SendOptions.ReliableUnordered);
                 else if (netId >= 0)
                     Logger.Log($"SERVER unknown peer {netId}");
             }
@@ -118,25 +118,25 @@ namespace NecroServer
 
         private void OnClientInput(ClientInput input, NetPeer peer)
         {
-            var res = World.SetInput(peer.GetUId(), input);
-            if (!res) server.DisconnectPeer(peer);
+            var res = _world.SetInput(peer.GetUId(), input);
+            if (!res) _server.DisconnectPeer(peer);
         }
 
         private void World_OnGameEnd()
         {
-            Logger.Log($"SERVER game finished {(DateTime.Now - startTime).ToString()}");
-            ServerState = ServerState.EndGame;
-            startTime = DateTime.Now;
+            Logger.Log($"SERVER game finished {(DateTime.Now - _startTime).ToString()}");
+            _serverState = ServerState.EndGame;
+            _startTime = DateTime.Now;
         }
 
         private void World_OnPlayerDead(long userId, PlayerStatus status)
         {
-            RequestQueue.Enqueue(async () =>
+            _requestQueue.Enqueue(async () =>
             {
                 var stat = status;
                 var id = userId;
 
-                var result = await MasterClient.SendStatus(stat, id);
+                var result = await _masterClient.SendStatus(stat, id);
                 if (result.UserId != id)
                     Logger.Log($"MASTER failed send player #{id} status");
                 status.Rating = result.Rating;
@@ -145,48 +145,48 @@ namespace NecroServer
 
         private void StartGame()
         {
-            World.StartGame(Players);
-            ServerState = ServerState.Playing;
+            _world.StartGame(_players);
+            _serverState = ServerState.Playing;
             SendPlayersInfo();
-            startTime = DateTime.Now;
+            _startTime = DateTime.Now;
         }
 
         public async Task Run()
         {
-            server.Start(Config.Port);
+            _server.Start(_config.Port);
             var masterUpdateTask = Task.Run(() => MasterUpdate());
-            Logger.Log($"SERVER started on port {Config.Port}");
-            while (Work)
+            Logger.Log($"SERVER started on port {_config.Port}");
+            while (_work)
             {
                 //update network
-                server.PollEvents();
+                _server.PollEvents();
 
                 //countdown to start
-                if (ServerState == ServerState.WaitingPlayers)
+                if (_serverState == ServerState.WaitingPlayers)
                 {
-                    if (WaitTime < 0f) StartGame();
-                    WaitTime -= Config.UpdateDelay / 1000.0f;
+                    if (_waitTime < 0f) StartGame();
+                    _waitTime -= _config.UpdateDelay / 1000.0f;
                 }
 
                 //update world
-                if (ServerState == ServerState.Playing)
+                if (_serverState == ServerState.Playing)
                 {
-                    World.Update();
-                    foreach (var (netId, player) in Players)
+                    _world.Update();
+                    foreach (var (netId, player) in _players)
                     {
                         if (player.IsAI) //AI player
-                            AI.MakeStep(Config, player, World);
-                        else if (Peers.ContainsKey(netId)) //Real & connected player
+                            AI.MakeStep(_config, player, _world);
+                        else if (_peers.ContainsKey(netId)) //Real & connected player
                         {
                             if (player.IsAlive) //Send world frame
                             {
-                                var packet = NetSerializer.Serialize(World.GetServerFrame(player));
-                                Peers[netId].Send(packet, SendOptions.Sequenced);
+                                var packet = _netSerializer.Serialize(_world.GetServerFrame(player));
+                                _peers[netId].Send(packet, SendOptions.Sequenced);
                             }
                             else //Send end packet
                             {
-                                var packet = NetSerializer.Serialize(World.GetServerEnd(player));
-                                Peers[netId].Send(packet, SendOptions.Unreliable);
+                                var packet = _netSerializer.Serialize(_world.GetServerEnd(player));
+                                _peers[netId].Send(packet, SendOptions.Unreliable);
                             }
                         }
                         else
@@ -195,17 +195,17 @@ namespace NecroServer
                 }
 
                 //send stats
-                if (ServerState == ServerState.EndGame)
+                if (_serverState == ServerState.EndGame)
                 {
-                    foreach (var (netId, player) in Players)
-                        if (!player.IsAI && Peers.ContainsKey(netId))
-                            Peers[netId].Send(NetSerializer.Serialize(World.GetServerEnd(player)), SendOptions.Unreliable);
-                    if ((DateTime.Now - startTime).TotalSeconds > Config.EndWaitTime)
+                    foreach (var (netId, player) in _players)
+                        if (!player.IsAI && _peers.ContainsKey(netId))
+                            _peers[netId].Send(_netSerializer.Serialize(_world.GetServerEnd(player)), SendOptions.Unreliable);
+                    if ((DateTime.Now - _startTime).TotalSeconds > _config.EndWaitTime)
                         Stop("timeout");
                 }
 
                 //Wait
-                await Task.Delay(Config.UpdateDelay);
+                await Task.Delay(_config.UpdateDelay);
 
 #if DEBUG
                 //Console commands
@@ -215,7 +215,7 @@ namespace NecroServer
                     switch (key.Key)
                     {
                         case ConsoleKey.M:
-                            World.DebugMap();
+                            _world.DebugMap();
                             break;
                         case ConsoleKey.Q:
                             Stop("stopped by console");
@@ -224,13 +224,13 @@ namespace NecroServer
                             StartGame();
                             break;
                         case ConsoleKey.D:
-                            World.DebugInfo();
+                            _world.DebugInfo();
                             break;
                     }
                 }
 #endif
             }
-            server.Stop();
+            _server.Stop();
             Logger.Log($"SERVER stopped");
             masterUpdateTask.Wait();
             Logger.Log($"SERVER master update task stopped");
@@ -238,22 +238,22 @@ namespace NecroServer
 
         public void Stop(string reason)
         {
-            Work = false;
+            _work = false;
             Logger.Log($"SERVER stop command '{reason}'");
         }
 
         public async Task MasterUpdate()
         {
-            while (Work)
+            while (_work)
             {
-                await Task.Delay(Config.MasterUpdateDelay);
-                while (RequestQueue.TryDequeue(out Func<Task> action))
+                await Task.Delay(_config.MasterUpdateDelay);
+                while (_requestQueue.TryDequeue(out Func<Task> action))
                     await action();
                 await SendInfoToMaster();
             }
         }
         private async Task SendInfoToMaster() =>
-            await MasterClient.SendState(ServerState, Players.Where((p) => !p.Value.IsAI).Count(), Config.MaxPlayers, Config.ConnectionKey);
+            await _masterClient.SendState(_serverState, _players.Where((p) => !p.Value.IsAI).Count(), _config.MaxPlayers, _config.ConnectionKey);
 
         public void OnNetworkError(NetEndPoint endPoint, int socketErrorCode)
         {
@@ -263,30 +263,30 @@ namespace NecroServer
         public void OnPeerConnected(NetPeer peer) //Just add peer and wait for auth packet
         {
             Logger.Log($"SERVER client {peer.GetUId()} connected");
-            Peers.Add(peer.GetUId(), peer);
+            _peers.Add(peer.GetUId(), peer);
         }
 
         public void OnNetworkReceive(NetPeer peer, NetDataReader reader) //Receive packets
         {
-            NetSerializer.ReadAllPackets(reader, peer);
+            _netSerializer.ReadAllPackets(reader, peer);
         }
 
         public async void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
             Logger.Log($"SERVER client {peer.GetUId()} disconnected, reason: '{disconnectInfo.Reason}'");
-            Peers.Remove(peer.GetUId());
-            if (ServerState == ServerState.Playing)
-                World.RemovePlayer(peer.GetUId());
-            else if (Players.ContainsKey(peer.GetUId()))
+            _peers.Remove(peer.GetUId());
+            if (_serverState == ServerState.Playing)
+                _world.RemovePlayer(peer.GetUId());
+            else if (_players.ContainsKey(peer.GetUId()))
             {
-                Players.Remove(peer.GetUId());
+                _players.Remove(peer.GetUId());
                 SendPlayersInfo();
             }
 
             //Send info to master
             await SendInfoToMaster();
 
-            if (Peers.Count == 0)
+            if (_peers.Count == 0)
                 Stop("no players");
         }
 

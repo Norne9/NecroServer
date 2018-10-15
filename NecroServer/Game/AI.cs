@@ -10,7 +10,7 @@ namespace Game
 {
     public static class AI
     {
-        private static readonly string[] AiNames = new string[]
+        private static readonly string[] _aiNames = new string[]
         {
             "Bluebeard", "Wasabeii", "Faustox",
             "Diviper", "Jhalmar", "Hironnoa",
@@ -28,18 +28,19 @@ namespace Game
             "Nedeze", "Wladik32rus", "Mpoublack",
             "DoLuX"
         };
-        private static readonly int NameOffset = GameMath.MathF.RandomInt(0, 1000);
-        private static int AiUserId = -1;
+        private static readonly int _nameOffset = GameMath.MathF.RandomInt(0, 1000);
+        private static int _aiUserId = -1;
+
         public static Player GetAiPlayer(Config config)
         {
-            var id = AiUserId--;
-            var name = AiNames[(Math.Abs(id) + NameOffset) % AiNames.Length];
+            var id = _aiUserId--;
+            var name = _aiNames[(Math.Abs(id) + _nameOffset) % _aiNames.Length];
             return new Player(id, id, name, false, config);
         }
 
         public static Player GetNeutrallPlayer(Config config)
         {
-            var id = -2000 + AiUserId--;
+            var id = -2000 + _aiUserId--;
             var name = "Neutrall";
             return new Player(id, id, name, false, config);
         }

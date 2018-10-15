@@ -12,20 +12,20 @@ namespace NecroServer
 {
     public class MasterClient
     {
-        private HttpClient HttpClient;
-        private Config Config;
+        private HttpClient _httpClient;
+        private Config _config;
 
         public MasterClient(Config config)
         {
-            Config = config;
-            HttpClient = new HttpClient();
+            _config = config;
+            _httpClient = new HttpClient();
         }
 
         public async Task<RespConfig> RequestConfig()
         {
             try
             {
-                var data = await HttpClient.GetStringAsync(Config.MasterServer + "config");
+                var data = await _httpClient.GetStringAsync(_config.MasterServer + "config");
                 return JsonConvert.DeserializeObject<RespConfig>(data);
             }
             catch (Exception e)
@@ -44,7 +44,7 @@ namespace NecroServer
                     UserId = userId,
                     UserKey = userKey,
                 });
-                var result = await HttpClient.PostAsync(Config.MasterServer + "client", new StringContent(json, Encoding.UTF8, "application/json"));
+                var result = await _httpClient.PostAsync(_config.MasterServer + "client", new StringContent(json, Encoding.UTF8, "application/json"));
                 var data = await result.Content.ReadAsStringAsync();
                 return JsonConvert.DeserializeObject<RespClient>(data);
             }
@@ -64,10 +64,10 @@ namespace NecroServer
                     InLobby = state == ServerState.Started || state == ServerState.WaitingPlayers,
                     ConnectedPlayers = playerCount,
                     TotalPlayers = totalPlayers,
-                    Port = Config.Port,
+                    Port = _config.Port,
                     ServerVersion = version,
                 });
-                await HttpClient.PostAsync(Config.MasterServer + "state", new StringContent(json, Encoding.UTF8, "application/json"));
+                await _httpClient.PostAsync(_config.MasterServer + "state", new StringContent(json, Encoding.UTF8, "application/json"));
             }
             catch (Exception e)
             {
@@ -89,7 +89,7 @@ namespace NecroServer
                     UnitKill = status.UnitKill,
                     UnitRise = status.UnitRise,
                 });
-                var result = await HttpClient.PostAsync(Config.MasterServer + "sendstatus", new StringContent(json, Encoding.UTF8, "application/json"));
+                var result = await _httpClient.PostAsync(_config.MasterServer + "sendstatus", new StringContent(json, Encoding.UTF8, "application/json"));
                 var data = await result.Content.ReadAsStringAsync();
                 return JsonConvert.DeserializeObject<RespStatus>(data);
             }

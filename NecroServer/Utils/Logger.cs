@@ -37,25 +37,25 @@ namespace NecroServer
         //INSTANCE
         private const int MsgTaskDelay = 500;
 
-        private readonly string WebHookUrl;
+        private readonly string _webHookUrl;
 
-        private readonly HttpClient client = new HttpClient();
-        private readonly ConcurrentQueue<Message> msgQueue = new ConcurrentQueue<Message>();
-        private readonly Task msgTask;
-        private bool Work = true, LogAll = false;
+        private readonly HttpClient _client = new HttpClient();
+        private readonly ConcurrentQueue<Message> _msgQueue = new ConcurrentQueue<Message>();
+        private readonly Task _msgTask;
+        private bool _work = true, _logAll = false;
 
         private Logger(string discordLog, bool logAll)
         {
-            LogAll = logAll;
-            WebHookUrl = discordLog;
-            msgTask = Task.Run(() => LoggerTask());
+            _logAll = logAll;
+            _webHookUrl = discordLog;
+            _msgTask = Task.Run(() => LoggerTask());
         }
 
         private async Task LoggerTask()
         {
-            while (Work || msgQueue.Count > 0)
+            while (_work || _msgQueue.Count > 0)
             {
-                while (msgQueue.TryDequeue(out Message msg))
+                while (_msgQueue.TryDequeue(out Message msg))
                 {
                     try
                     {
@@ -63,7 +63,7 @@ namespace NecroServer
                         Console.ForegroundColor = msg.IsCritical ? ConsoleColor.DarkRed : col;
                         Console.WriteLine($"{(msg.IsCritical ? "!" : " ")}[{msg.Time.ToString("dd.MM.yyyy HH:mm:ss.fff")}]\t{msg.Text}");
                         Console.ForegroundColor = col;
-                        if (LogAll || msg.IsCritical)
+                        if (_logAll || msg.IsCritical)
                             await DiscordSend(msg.Time, msg.Text, msg.IsCritical);
                     }
                     catch (Exception) { }
@@ -74,14 +74,14 @@ namespace NecroServer
 
         private async Task DiscordSend(DateTime time, string log, bool crit)
         {
-            if (string.IsNullOrEmpty(WebHookUrl)) return;
+            if (string.IsNullOrEmpty(_webHookUrl)) return;
 
             try
             {
                 var message = $"{(crit ? "@everyone **CRITICAL ERROR**\n" : "")}```ml\n[{time.ToString("dd.MM.yyyy HH:mm:ss.fff")}] {log}```";
                 var values = new Dictionary<string, string> { { "content", message }, };
                 var content = new FormUrlEncodedContent(values);
-                _ = await client.PostAsync(WebHookUrl, content);
+                _ = await _client.PostAsync(_webHookUrl, content);
             }
             catch (Exception e)
             { Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss.fff")}] Discord fail: {e.Message}"); }
@@ -89,7 +89,7 @@ namespace NecroServer
 
         private void AddMessage(string message, bool crit)
         {
-            msgQueue.Enqueue(new Message()
+            _msgQueue.Enqueue(new Message()
             {
                 Time = DateTime.Now,
                 Text = message,
@@ -99,9 +99,9 @@ namespace NecroServer
 
         public void Dispose()
         {
-            Work = false;
-            msgTask?.Wait();
-            client?.Dispose();
+            _work = false;
+            _msgTask?.Wait();
+            _client?.Dispose();
         }
     }
 }

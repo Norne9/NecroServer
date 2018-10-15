@@ -7,13 +7,13 @@ namespace Game
 {
     public class UnitBear : Unit
     {
-        private static readonly UnitStats BearStats = new UnitStats(UnitStats.GetDefaultStats())
+        private static readonly UnitStats _bearStats = new UnitStats(UnitStats.GetDefaultStats())
         {
             MaxHealth = 250f,
             AttackDelay = 0.83f,
             Damage = 16f
         };
-        public UnitBear(Config config, ushort unitId) : base(config, unitId, UnitFactory.MeshBear, BearStats)
+        public UnitBear(Config config, ushort unitId) : base(config, unitId, UnitFactory.MeshBear, _bearStats)
         { }
     }
 }

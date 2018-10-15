@@ -10,7 +10,7 @@ namespace Game
     public partial class World
     {
         public List<Unit> OverlapUnits(Vector2 pos, float rad) =>
-            UnitsTree.Overlap<Unit>(pos, rad);
+            _unitsTree.Overlap<Unit>(pos, rad);
 
         public void MoveUnit(Unit unit, Vector2 newPos)
         {
@@ -18,16 +18,16 @@ namespace Game
             if (newPos.SqrLength() > w2) //Don't go outside world
                 newPos = newPos.Normalize() * (WorldScale - 0.5f);
 
-            unit.Move(newPos, DeltaTime, UnitsTree, ObstaclesTree);
+            unit.Move(newPos, DeltaTime, _unitsTree, _obstaclesTree);
         }
 
         public Rune TakeRune(Unit unit)
         {
-            var rune = RunesTree.Overlap<Rune>(unit.Position, unit.Radius).SingleOrDefault();
+            var rune = _runesTree.Overlap<Rune>(unit.Position, unit.Radius).SingleOrDefault();
             if (rune == null) return null;
             Logger.Log($"GAME user '{unit.Owner?.Name ?? "null"}' take rune");
-            Runes.Remove(rune);
-            RunesTree = new OcTree(WorldZone, Runes, true);
+            _runes.Remove(rune);
+            _runesTree = new OcTree(_worldZone, _runes, true);
             return rune;
         }
     }

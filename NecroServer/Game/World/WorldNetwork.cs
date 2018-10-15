@@ -13,27 +13,27 @@ namespace Game
     {
         public void RemovePlayer(int networkId)
         {
-            if (Players.ContainsKey(networkId))
+            if (_players.ContainsKey(networkId))
             {
-                var player = Players[networkId];
+                var player = _players[networkId];
                 if (player.IsAlive)
                 {
                     Logger.Log($"GAME remove player '{player.Name}'");
                     for (int i = player.Units.Count - 1; i >= 0; i--)
                         player.Units[i].TakeDamage(null, float.MaxValue);
-                    player.PlayerStatus.Place = Config.MaxPlayers;
+                    player.PlayerStatus.Place = _config.MaxPlayers;
                     OnPlayerDead?.Invoke(player.UserId, player.PlayerStatus);
                 }
-                Players.Remove(networkId);
+                _players.Remove(networkId);
             }
         }
 
         public bool SetInput(int networkId, ClientInput input)
         {
-            if (Players == null) return true;
-            if (Players.ContainsKey(networkId))
+            if (_players == null) return true;
+            if (_players.ContainsKey(networkId))
             {
-                Players[networkId].SetInput(new Vector2(input.MoveX, input.MoveY), input.Rise);
+                _players[networkId].SetInput(new Vector2(input.MoveX, input.MoveY), input.Rise);
                 return true;
             }
             else
@@ -45,26 +45,26 @@ namespace Game
 
         public ServerFrame GetServerFrame(Player player)
         {
-            var visiblePlayers = Players.Where((p) => p.Value == player ||
+            var visiblePlayers = _players.Where((p) => p.Value == player ||
                     (p.Value.IsAlive && (p.Value.UnitsEffect?.StatsChange.UnitVisible ?? true) &&
-                    (p.Value.AvgPosition - player.AvgPosition).SqrLength() < Config.ViewRange * Config.ViewRange))
+                    (p.Value.AvgPosition - player.AvgPosition).SqrLength() < _config.ViewRange * _config.ViewRange))
                 .Select((p) => p.Value.GetPlayerCameraInfo()).ToArray();
 
-            var visibleUnits = OverlapUnits(player.AvgPosition, Config.ViewRange)
+            var visibleUnits = OverlapUnits(player.AvgPosition, _config.ViewRange)
                 .Where((u) => u.CurrentStats.UnitVisible || u.Owner == player);
-            if (visibleUnits.Count() > Config.MaxUnitsPacket)
-                visibleUnits = visibleUnits.OrderBy((u) => (u.Position - player.AvgPosition).SqrLength()).Take(Config.MaxUnitsPacket);
+            if (visibleUnits.Count() > _config.MaxUnitsPacket)
+                visibleUnits = visibleUnits.OrderBy((u) => (u.Position - player.AvgPosition).SqrLength()).Take(_config.MaxUnitsPacket);
             var visibleUnitsData = visibleUnits.Select((u) => u.GetUnitInfo(this, player)).ToArray();
 
-            var visibleRunes = RunesTree.Overlap<Rune>(player.AvgPosition, Config.ViewRange)
+            var visibleRunes = _runesTree.Overlap<Rune>(player.AvgPosition, _config.ViewRange)
                 .Select((r) => r.GetRuneInfo()).ToArray();
 
             return new ServerFrame()
             {
-                State = WorldState,
-                PlayTime = TimeToEnd,
+                State = _worldState,
+                PlayTime = _timeToEnd,
                 ZoneSize = ZoneRadius,
-                AlivePlayers = AlivePlayers,
+                AlivePlayers = _alivePlayers,
                 Cooldown = player.GetCooldown(),
                 PlayerCameras = visiblePlayers,
                 Units = visibleUnitsData,
@@ -88,12 +88,12 @@ namespace Game
             new ServerMap()
             {
                 Scale = WorldScale,
-                Obstacles = Obstacles.Select((o) => o.GetObstacleInfo()).ToArray(),
-                MaxPlayers = Config.MaxPlayers,
-                MaxUnits = Config.MaxUnitCount,
-                MapType = MapType,
-                Runes = Runes.Select((r) => r.GetRuneInfo()).ToArray(),
-                Units = Units.Select((u) => u.GetUnitInfo(this, null)).ToArray(),
+                Obstacles = _obstacles.Select((o) => o.GetObstacleInfo()).ToArray(),
+                MaxPlayers = _config.MaxPlayers,
+                MaxUnits = _config.MaxUnitCount,
+                MapType = _mapType,
+                Runes = _runes.Select((r) => r.GetRuneInfo()).ToArray(),
+                Units = _units.Select((u) => u.GetUnitInfo(this, null)).ToArray(),
             };
     }
 }

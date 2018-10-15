@@ -12,25 +12,25 @@ namespace Game
     {
         public void StartGame(Dictionary<int, Player> players)
         {
-            Players = players;
-            Logger.Log($"GAME starting with {Players.Count} players");
+            this._players = players;
+            Logger.Log($"GAME starting with {this._players.Count} players");
             //Add ai players
-            while (Players.Count < Config.MaxPlayers)
+            while (this._players.Count < _config.MaxPlayers)
             {
-                var aiPlayer = AI.GetAiPlayer(Config);
-                Players.Add(aiPlayer.NetworkId, aiPlayer);
+                var aiPlayer = AI.GetAiPlayer(_config);
+                this._players.Add(aiPlayer.NetworkId, aiPlayer);
             }
 
             AddNeutrallPlayer();
 
             //Rise units for players
-            foreach (var player in Players.Values)
+            foreach (var player in this._players.Values)
             {
                 var unit = RandomUnit();
                 unit.Rise(player);
                 if (player.DoubleUnits)
                 {
-                    for (int i = 0; i < Config.AdditionalUnitCount; i++)
+                    for (int i = 0; i < _config.AdditionalUnitCount; i++)
                         NearUnit(unit).Rise(player);
 
                     var poses = UnitPosition.GetPositions(player.Units.Count);
@@ -44,23 +44,23 @@ namespace Game
                 }
             }
 
-            StartTime = DateTime.Now;
-            WorldState = WorldState.Static;
+            _startTime = DateTime.Now;
+            _worldState = WorldState.Static;
             Logger.Log($"GAME started");
         }
         private Unit RandomUnit()
         {
-            var freeUnits = Units.Where((u) => u.Owner == null);
+            var freeUnits = _units.Where((u) => u.Owner == null);
             return freeUnits.ElementAt(GameMath.MathF.RandomInt(0, freeUnits.Count()));
         }
         private Unit NearUnit(Unit unit) =>
-            Units.Where((u) => u.Owner == null).OrderBy((u) => (u.Position - unit.Position).SqrLength()).First();
+            _units.Where((u) => u.Owner == null).OrderBy((u) => (u.Position - unit.Position).SqrLength()).First();
 
         private void AddNeutrallPlayer()
         {
-            var nPlayer = AI.GetNeutrallPlayer(Config);
-            Players.Add(nPlayer.NetworkId, nPlayer);
-            foreach (var unit in Units)
+            var nPlayer = AI.GetNeutrallPlayer(_config);
+            _players.Add(nPlayer.NetworkId, nPlayer);
+            foreach (var unit in _units)
                 if (unit is UnitBear)
                     unit.Rise(nPlayer);
         }
@@ -68,65 +68,67 @@ namespace Game
         public void Update()
         {
             //Calculate delta time
-            DeltaTime = (float)DtTimer.Elapsed.TotalSeconds;
-            DtTimer.Restart();
+            DeltaTime = (float)_dtTimer.Elapsed.TotalSeconds;
+            _dtTimer.Restart();
 
             //Rebuild unit tree
-            UnitsTree = new OcTree(WorldZone, Units, true);
+            _unitsTree = new OcTree(_worldZone, _units, true);
 
             //Get alive players count
-            AlivePlayers = Players.Values.Where((p) => p.IsAlive).Count();
+            _alivePlayers = _players.Values.Where((p) => p.IsAlive).Count();
 
             //Kill all units if we have winner
-            if (AlivePlayers == 1)
+            if (_alivePlayers == 1)
             {
-                foreach (var unit in Units)
+                foreach (var unit in _units)
                     unit.TakeDamage(null, float.MaxValue);
             }
 
             //Update players
-            foreach (var player in Players.Values)
+            foreach (var player in _players.Values)
             {
                 player.Update(this);
                 if (!player.IsAlive && player.PlayerStatus.Place == 0)
                 {
-                    player.PlayerStatus.Place = AlivePlayers > 0 ? AlivePlayers : 1;
+                    player.PlayerStatus.Place = _alivePlayers > 0 ? _alivePlayers : 1;
                     if (!player.IsAI) OnPlayerDead?.Invoke(player.UserId, player.PlayerStatus);
-                    Logger.Log($"GAME player dead {player.PlayerStatus.Place}/{Config.MaxPlayers}");
+                    Logger.Log($"GAME player dead {player.PlayerStatus.Place}/{_config.MaxPlayers}");
                 }
             }
 
             //No more players - end game
-            if (AlivePlayers == 0)
+            if (_alivePlayers == 0)
                 OnGameEnd?.Invoke();
 
             //Zone processing
-            switch (WorldState)
+            float elapsedTime = (float)(DateTime.Now - _startTime).TotalSeconds;
+            switch (_worldState)
             {
                 case WorldState.Static:
-                    if ((DateTime.Now - StartTime).TotalSeconds > Config.StaticTime)
+                    if (elapsedTime > _config.StaticTime)
                     {
-                        StartTime = DateTime.Now;
-                        WorldState = WorldState.Resize;
-                        BeginZoneRadius = ZoneRadius;
+                        _startTime = DateTime.Now;
+                        _worldState = WorldState.Resize;
+                        _beginZoneRadius = ZoneRadius;
                         Logger.Log($"GAME zone begin");
                     }
-                    TimeToEnd = Config.StaticTime - (float)(DateTime.Now - StartTime).TotalSeconds;
+                    _timeToEnd = _config.StaticTime - elapsedTime;
                     break;
                 case WorldState.Resize:
-                    float percent = (Config.ResizeTime - (float)(DateTime.Now - StartTime).TotalSeconds) / Config.ResizeTime;
-                    if (percent < 0f) {
-                        percent = 0; TargetZoneRadius = 0f;
-                        StartTime = DateTime.Now; WorldState = WorldState.Static;
+                    float percent = (_config.ResizeTime - elapsedTime) / _config.ResizeTime;
+                    if (percent < 0f)
+                    {
+                        percent = 0; _targetZoneRadius = 0f;
+                        _startTime = DateTime.Now; _worldState = WorldState.Static;
                     }
                     else
                     {
-                        ZoneRadius = Lerp(BeginZoneRadius, TargetZoneRadius, 1f - percent);
-                        TimeToEnd = Config.ResizeTime - (float)(DateTime.Now - StartTime).TotalSeconds;
+                        ZoneRadius = Lerp(_beginZoneRadius, _targetZoneRadius, 1f - percent);
+                        _timeToEnd = _config.ResizeTime - elapsedTime;
                     }
                     break;
             }
-            if (TimeToEnd < 0) TimeToEnd = 0;
+            if (_timeToEnd < 0) _timeToEnd = 0;
         }
 
         private float Lerp(float from, float to, float percent) =>

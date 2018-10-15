@@ -14,18 +14,14 @@ namespace Game
         public const byte MeshBear = 2;
         public const byte MeshZombie = 3;
 
-        private const float DefaultMoveSpeed = 4f;
-        private const float DefaultViewRadius = 6f;
-        private const float DefaultAttackRange = 0.5f;
-
-        private ushort CurrentUnitId;
-        private readonly List<ConstructorInfo> UnitProtos;
-        private readonly Config Config;
+        private ushort _currentUnitId;
+        private readonly List<ConstructorInfo> _unitProtos;
+        private readonly Config _config;
 
         public UnitFactory(Config config)
         {
-            CurrentUnitId = 0;
-            Config = config;
+            _currentUnitId = 0;
+            _config = config;
 
             var constructorTypes = new Type[] { typeof(Config), typeof(ushort) };
 
@@ -34,11 +30,11 @@ namespace Game
             var bear = typeof(UnitBear).GetConstructor(constructorTypes);
             var zombie = typeof(UnitZombie).GetConstructor(constructorTypes);
 
-            UnitProtos = new List<ConstructorInfo>();
+            _unitProtos = new List<ConstructorInfo>();
             void AddByChance(ConstructorInfo unitType, int chance)
             {
                 for (int i = 0; i < chance; i++)
-                    UnitProtos.Add(unitType);
+                    _unitProtos.Add(unitType);
             }
 
             AddByChance(troll, 4);
@@ -48,7 +44,7 @@ namespace Game
         }
 
         public Unit MakeUnit() =>
-            (Unit)UnitProtos[GameMath.MathF.RandomInt(0, UnitProtos.Count)]
-            .Invoke(new object[] { Config, CurrentUnitId++ });
+            (Unit)_unitProtos[GameMath.MathF.RandomInt(0, _unitProtos.Count)]
+            .Invoke(new object[] { _config, _currentUnitId++ });
     }
 }

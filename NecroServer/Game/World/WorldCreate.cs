@@ -12,29 +12,29 @@ namespace Game
 
         public World(Config config)
         {
-            Config = config;
+            _config = config;
 
             Logger.Log("WORLD creating world");
-            MapType = GameMath.MathF.RandomInt(int.MinValue, int.MaxValue);
+            _mapType = GameMath.MathF.RandomInt(int.MinValue, int.MaxValue);
             WorldScale = GameMath.MathF.RandomInt(config.MinWorldScale, config.MaxWorldScale);
             ZoneRadius = WorldScale;
-            TargetZoneRadius = 0.3f * ZoneRadius;
-            WorldZone = new BoundingBox(-WorldScale, -WorldScale, WorldScale * 2, WorldScale * 2);
+            _targetZoneRadius = 0.3f * ZoneRadius;
+            _worldZone = new BoundingBox(-WorldScale, -WorldScale, WorldScale * 2, WorldScale * 2);
 
             Logger.Log("WORLD creating obstacles");
-            Obstacles = GenerateObstacles(config.ObstacleCount);
+            _obstacles = GenerateObstacles(config.ObstacleCount);
             Logger.Log("WORLD creating obstacle tree");
-            ObstaclesTree = new OcTree(WorldZone, Obstacles, true);
+            _obstaclesTree = new OcTree(_worldZone, _obstacles, true);
 
             Logger.Log("WORLD creating units");
-            Units = GenerateUnits(config.UnitCount);
+            _units = GenerateUnits(config.UnitCount);
             Logger.Log("WORLD creating unit tree");
-            UnitsTree = new OcTree(WorldZone, Units, true);
+            _unitsTree = new OcTree(_worldZone, _units, true);
 
             Logger.Log("WORLD creating runes");
-            Runes = GenerateRunes(config.RuneCount);
+            _runes = GenerateRunes(config.RuneCount);
             Logger.Log("WORLD creating rune tree");
-            RunesTree = new OcTree(WorldZone, Runes, true);
+            _runesTree = new OcTree(_worldZone, _runes, true);
 
             Logger.Log("WORLD created");
         }
@@ -50,11 +50,11 @@ namespace Game
                 {
                     obj = ObstacleFactory.MakeObstacle();
 
-                    obj.Position = GetPointInCircle(WorldScale * Config.ObstacleRange);
+                    obj.Position = GetPointInCircle(WorldScale * _config.ObstacleRange);
                     if (GameMath.MathF.Abs(obj.Position.X) > WorldScale - 2f) continue;
                     if (GameMath.MathF.Abs(obj.Position.Y) > WorldScale - 2f) continue;
 
-                    tree = new OcTree(WorldZone, objs, false);
+                    tree = new OcTree(_worldZone, objs, false);
 
                     if (tree != null && !tree.Intersect(obj.Position, obj.Radius + ObstacleFactory.SpaceBetween))
                         break;
@@ -67,16 +67,16 @@ namespace Game
         private Unit[] GenerateUnits(int count)
         {
             var objs = new List<Unit>();
-            var factory = new UnitFactory(Config);
+            var factory = new UnitFactory(_config);
             for (int i = 0; i < count; i++)
             {
-                var tree = new OcTree(WorldZone, objs, false);
+                var tree = new OcTree(_worldZone, objs, false);
                 var obj = factory.MakeUnit();
                 Vector2 pos;
                 for (int n = 0; n < MaxTryCount; n++)
                 {
-                    pos = GetPointInCircle(WorldScale * Config.UnitRange);
-                    if (obj.TryMove(pos, tree, ObstaclesTree))
+                    pos = GetPointInCircle(WorldScale * _config.UnitRange);
+                    if (obj.TryMove(pos, tree, _obstaclesTree))
                         break;
                 }
                 objs.Add(obj);
@@ -89,18 +89,18 @@ namespace Game
             var objs = new List<Rune>();
             for (int i = 0; i < count; i++)
             {
-                var tree = new OcTree(WorldZone, objs, false);
+                var tree = new OcTree(_worldZone, objs, false);
                 var obj = RuneFactory.MakeRune();
                 
                 Vector2 pos;
                 for (int n = 0; n < MaxTryCount; n++)
                 {
-                    pos = GetPointInCircle(ZoneRadius * Config.RuneRange);
+                    pos = GetPointInCircle(ZoneRadius * _config.RuneRange);
                     obj.Radius = ZoneRadius / 3f;
                     if (!obj.TryMove(pos, tree)) continue;
                     obj.Radius = Rune.RuneRadius;
 
-                    if (obj.TryMove(pos, tree, ObstaclesTree, UnitsTree))
+                    if (obj.TryMove(pos, tree, _obstaclesTree, _unitsTree))
                         break;
                 }
                 objs.Add(obj);

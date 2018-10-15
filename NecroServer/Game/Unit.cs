@@ -24,20 +24,20 @@ namespace Game
         public Player Owner { get; private set; } = null;
         public bool AttackAnimation { get; private set; } = false;
 
-        private readonly List<Effect> UnitEffects = new List<Effect>();
+        private readonly List<Effect> _unitEffects = new List<Effect>();
 
-        private float Rotation = 0f;
-        private bool AttackCommnd = false;
-        private Unit MyTarget = null;
+        private float _rotation = 0f;
+        private bool _attackCommand = false;
+        private Unit _myTarget = null;
 
-        private DateTime lastAttack = DateTime.Now;
-        private DateTime lastRise = DateTime.Now;
+        private DateTime _lastAttack = DateTime.Now;
+        private DateTime _lastRise = DateTime.Now;
 
-        private readonly Config Config;
+        private readonly Config _config;
 
         public Unit(Config config, ushort id, byte mesh, UnitStats stats)
         {
-            Config = config;
+            _config = config;
             Radius = 0.5f;
 
             UnitId = id;
@@ -45,7 +45,7 @@ namespace Game
             UnitMesh = mesh;
             CurrentStats = UnitStats = stats;
 
-            Rotation = GameMath.MathF.RandomFloat(0f, GameMath.MathF.PI / 2f);
+            _rotation = GameMath.MathF.RandomFloat(0f, GameMath.MathF.PI / 2f);
         }
 
         public UnitInfo GetUnitInfo(World world, Player player) =>
@@ -55,9 +55,9 @@ namespace Game
                 UnitMesh = UnitMesh,
                 PosX = (short)(Position.X / world.WorldScale * short.MaxValue),
                 PosY = (short)(Position.Y / world.WorldScale * short.MaxValue),
-                Rot = (byte)((Rotation > 0 ? Rotation : Rotation + GameMath.MathF.PI * 2f) / GameMath.MathF.PI / 2f * byte.MaxValue),
+                Rot = (byte)((_rotation > 0 ? _rotation : _rotation + GameMath.MathF.PI * 2f) / GameMath.MathF.PI / 2f * byte.MaxValue),
                 Health = (byte)(Health / CurrentStats.MaxHealth * byte.MaxValue),
-                Rune = Owner?.UnitsEffect?.VisualEffect ?? Effect.GetVisual(UnitEffects),
+                Rune = Owner?.UnitsEffect?.VisualEffect ?? Effect.GetVisual(_unitEffects),
                 Attack = AttackAnimation,
                 PlayerOwned = Owner == player
             };
@@ -66,34 +66,34 @@ namespace Game
         {
             if (!IsAlive) return;
             CurrentStats = ApplyEffects(); //Process & apply effects
-            if ((DateTime.Now - lastRise).TotalSeconds < CurrentStats.RiseTime) return; //We rising - don't do anything
+            if ((DateTime.Now - _lastRise).TotalSeconds < CurrentStats.RiseTime) return; //We rising - don't do anything
 
             var lookDirection = CalcLook(); //Default look direction
             AttackAnimation = false; //Reset attack
-            AttackCommnd = cmdAttack;
+            _attackCommand = cmdAttack;
             if (cmdAttack) //Find target and attack or stay calm
             {
-                MyTarget = SelectTarget(world);
-                if (MyTarget != null) lookDirection = (MyTarget.Position - Position); //Look at enemy
-                AttackAnimation = MyTarget != null; //Play attack animation
+                _myTarget = SelectTarget(world);
+                if (_myTarget != null) lookDirection = (_myTarget.Position - Position); //Look at enemy
+                AttackAnimation = _myTarget != null; //Play attack animation
 
                 //We cant do anithing if we attack
-                if ((DateTime.Now - lastAttack).TotalSeconds > CurrentStats.AttackDelay)
+                if ((DateTime.Now - _lastAttack).TotalSeconds > CurrentStats.AttackDelay)
                 {
-                    if (MyTarget != null) //We have target
+                    if (_myTarget != null) //We have target
                     {
-                        var aRange = CurrentStats.AttackRange + MyTarget.Radius + Radius; aRange *= aRange;
-                        if ((MyTarget.Position - Position).SqrLength() > aRange) //We far
+                        var aRange = CurrentStats.AttackRange + _myTarget.Radius + Radius; aRange *= aRange;
+                        if ((_myTarget.Position - Position).SqrLength() > aRange) //We far
                         {
-                            world.MoveUnit(this, CalcNewPos(MyTarget.Position, CurrentStats.MoveSpeed, world.DeltaTime)); //go
+                            world.MoveUnit(this, CalcNewPos(_myTarget.Position, CurrentStats.MoveSpeed, world.DeltaTime)); //go
                             AttackAnimation = false; //Disable attack animation
                         }
                         else
                         {
-                            Effect.RemoveAttack(UnitEffects);
+                            Effect.RemoveAttack(_unitEffects);
                             Owner?.UnitAttack();
-                            lastAttack = DateTime.Now;
-                            AttackUnit(MyTarget);
+                            _lastAttack = DateTime.Now;
+                            AttackUnit(_myTarget);
                         }
                     }
                     else //No target - Just move
@@ -119,12 +119,12 @@ namespace Game
 
             //Apply damage from zone
             if (Position.SqrLength() > world.ZoneRadius * world.ZoneRadius)
-                TakeDamage(null, Config.ZoneDps * world.DeltaTime);
+                TakeDamage(null, _config.ZoneDps * world.DeltaTime);
 
             //Calculate rotation
             if (lookDirection.SqrLength() < 0.001f)
                 lookDirection = CalcLook();
-            Rotation = System.MathF.Atan2(lookDirection.X, lookDirection.Y);
+            _rotation = System.MathF.Atan2(lookDirection.X, lookDirection.Y);
 
             //Apply health change
             if (CurrentStats.HealthPerSecond != 0)
@@ -147,8 +147,8 @@ namespace Game
         private UnitStats ApplyEffects()
         {
             var result = new UnitStats(UnitStats);
-            Effect.ProcessEffects(UnitEffects);
-            foreach (var effect in UnitEffects)
+            Effect.ProcessEffects(_unitEffects);
+            foreach (var effect in _unitEffects)
                 result *= effect.StatsChange;
             if (Owner?.UnitsEffect != null)
                 result *= Owner.UnitsEffect.StatsChange;
@@ -158,7 +158,7 @@ namespace Game
 
         public void Rise(Player player)
         {
-            if (Owner != null || (player.Units.Count >= Config.MaxUnitCount && !player.IsNeutrall))
+            if (Owner != null || (player.Units.Count >= _config.MaxUnitCount && !player.IsNeutrall))
                 return;
 
             Logger.Log($"GAME player '{player.Name}' rised unit {UnitId}");
@@ -167,13 +167,13 @@ namespace Game
             player.Units.Add(this);
 
             player.PlayerStatus.UnitRise++;
-            lastRise = DateTime.Now;
+            _lastRise = DateTime.Now;
         }
 
         public void Heal()
         {
             if (Health < CurrentStats.MaxHealth)
-                Health += CurrentStats.MaxHealth * Config.HealValue;
+                Health += CurrentStats.MaxHealth * _config.HealValue;
             if (Health > CurrentStats.MaxHealth)
                 Health = CurrentStats.MaxHealth;
         }
@@ -181,7 +181,7 @@ namespace Game
         public void TakeDamage(Unit damager, float damage)
         {
             if (!IsAlive) return;
-            damage *= GameMath.MathF.RandomFloat(1f - Config.RandomDamage / 2f, 1f + Config.RandomDamage / 2f);
+            damage *= GameMath.MathF.RandomFloat(1f - _config.RandomDamage / 2f, 1f + _config.RandomDamage / 2f);
             damage *= CurrentStats.TakeDamageMultiplier;
 
             Health -= damage;
@@ -196,12 +196,12 @@ namespace Game
                 Owner.PlayerStatus.DamageReceive += damage;
 
             Owner?.UnitDamage();
-            Effect.RemoveDamage(UnitEffects);
+            Effect.RemoveDamage(_unitEffects);
 
             if (!IsAlive) //Die
             {
                 Health = 0f;
-                UnitEffects.Clear();
+                _unitEffects.Clear();
                 if (damager == null)
                     Logger.Log($"GAME unit {UnitId}@{Owner?.Name ?? "null"} killed by zone");
                 else
@@ -216,7 +216,7 @@ namespace Game
         }
 
         public void TakeEffect(Effect effect) =>
-            Effect.AddEffect(UnitEffects, effect);
+            Effect.AddEffect(_unitEffects, effect);
 
         #region UnitMovement
 
@@ -235,7 +235,7 @@ namespace Game
             Position = newPosition;
 
             if (CheckIntersect(trees, out Vector2 vec, out float pushPower))
-                Position = CalcNewPos(Position + (Position - vec), CurrentStats.MoveSpeed * (AttackCommnd ? 2.0f : pushPower), dt);
+                Position = CalcNewPos(Position + (Position - vec), CurrentStats.MoveSpeed * (_attackCommand ? 2.0f : pushPower), dt);
         }
         private bool CheckIntersect(OcTree[] trees, out Vector2 result, out float pushPower)
         {
@@ -247,8 +247,7 @@ namespace Game
                 var objs = tree.Overlap<PhysicalObject>(Position, Radius);
                 foreach (var obj in objs)
                 {
-                    var unit = obj as Unit;
-                    if (unit == null)
+                    if (!(obj is Unit unit))
                     {
                         poses.Add(obj.Position);
                         pushPower = pushPower < 0.9f ? 0.9f : pushPower;

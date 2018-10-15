@@ -12,32 +12,32 @@ namespace Game
         public event Action OnGameEnd;
         public event Action<long, PlayerStatus> OnPlayerDead;
 
-        private Dictionary<int, Player> Players;
+        private Dictionary<int, Player> _players;
 
-        private readonly PhysicalObject[] Obstacles;
-        private readonly Unit[] Units;
-        private readonly List<Rune> Runes = new List<Rune>();
+        private readonly PhysicalObject[] _obstacles;
+        private readonly Unit[] _units;
+        private readonly List<Rune> _runes = new List<Rune>();
 
-        private readonly OcTree ObstaclesTree;
-        private OcTree UnitsTree;
-        private OcTree RunesTree;
+        private readonly OcTree _obstaclesTree;
+        private OcTree _unitsTree;
+        private OcTree _runesTree;
 
-        public readonly float WorldScale;
-        private readonly BoundingBox WorldZone;
-        private readonly int MapType;
+        public float WorldScale { get; }
+        private readonly BoundingBox _worldZone;
+        private readonly int _mapType;
 
-        private readonly Config Config;
+        private readonly Config _config;
 
-        private Stopwatch DtTimer = new Stopwatch();
+        private Stopwatch _dtTimer = new Stopwatch();
         public float DeltaTime { get; private set; } = 0f;
 
         public float ZoneRadius { get; private set; }
-        private float TargetZoneRadius = 0f, BeginZoneRadius = 0f;
-        private WorldState WorldState = WorldState.Static;
-        private DateTime StartTime = DateTime.Now;
+        private float _targetZoneRadius = 0f, _beginZoneRadius = 0f;
+        private WorldState _worldState = WorldState.Static;
+        private DateTime _startTime = DateTime.Now;
 
         //for clients
-        private int AlivePlayers = 0;
-        private float TimeToEnd = 0f;
+        private int _alivePlayers = 0;
+        private float _timeToEnd = 0f;
     }
 }

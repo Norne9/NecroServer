@@ -7,13 +7,13 @@ namespace Game
 {
     public class UnitOrk : Unit
     {
-        private static readonly UnitStats OrkStats = new UnitStats(UnitStats.GetDefaultStats())
+        private static readonly UnitStats _orkStats = new UnitStats(UnitStats.GetDefaultStats())
         {
             MaxHealth = 150f,
             AttackDelay = 0.76f,
             Damage = 10f
         };
-        public UnitOrk(Config config, ushort unitId) : base(config, unitId, UnitFactory.MeshOrk, OrkStats)
+        public UnitOrk(Config config, ushort unitId) : base(config, unitId, UnitFactory.MeshOrk, _orkStats)
         { }
     }
 }

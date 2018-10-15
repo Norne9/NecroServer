@@ -25,14 +25,14 @@ namespace Game
 
         public readonly PlayerStatus PlayerStatus = new PlayerStatus();
 
-        private Vector2 InputMove = new Vector2(0, 0);
+        private Vector2 _inputMove = new Vector2(0, 0);
         public Vector2 SmallInput { get; private set; } = new Vector2(0, 1);
-        private bool InputRise = false;
+        private bool _inputRise = false;
 
-        private DateTime LastRise = DateTime.Now.AddYears(-1);
-        private int RiseCount = 0;
+        private DateTime _lastRise = DateTime.Now.AddYears(-1);
+        private int _riseCount = 0;
 
-        private readonly Config Config;
+        private readonly Config _config;
 
         public Player(long userId, int netId, string name, bool doubleUnits, Config config)
         {
@@ -40,7 +40,7 @@ namespace Game
             NetworkId = netId;
             Name = name;
             DoubleUnits = doubleUnits;
-            Config = config;
+            _config = config;
 
             if (IsNeutrall) UnitsEffect = Effect.Neutrall();
         }
@@ -52,15 +52,15 @@ namespace Game
             new PlayerCameraInfo() { PosX = AvgPosition.X, PosY = AvgPosition.Y, UserId = UserId };
 
         public float GetCooldown() =>
-            GameMath.MathF.Clamp((Config.RiseCooldown + RiseCount * Config.RiseAddCooldown) - (float)(DateTime.Now - LastRise).TotalSeconds,
-                0f, (Config.RiseCooldown + RiseCount * Config.RiseAddCooldown));
+            GameMath.MathF.Clamp((_config.RiseCooldown + _riseCount * _config.RiseAddCooldown) - (float)(DateTime.Now - _lastRise).TotalSeconds,
+                0f, (_config.RiseCooldown + _riseCount * _config.RiseAddCooldown));
 
         public void SetInput(Vector2 input, bool rise)
         {
-            InputMove = input;
-            if (InputMove.SqrLength() > Config.InputDeadzone)
-                SmallInput = InputMove;
-            InputRise = rise;
+            _inputMove = input;
+            if (_inputMove.SqrLength() > _config.InputDeadzone)
+                SmallInput = _inputMove;
+            _inputRise = rise;
         }
 
         private void NeutrallUpdate(World world)
@@ -89,24 +89,24 @@ namespace Game
                 UnitsEffect = null;
 
             //Check rise or heal
-            if (InputRise && GetCooldown() < 0.001f)
+            if (_inputRise && GetCooldown() < 0.001f)
             {
-                LastRise = DateTime.Now;
-                var unitsRise = world.OverlapUnits(AvgPosition, Config.RiseRadius)
+                _lastRise = DateTime.Now;
+                var unitsRise = world.OverlapUnits(AvgPosition, _config.RiseRadius)
                     .Where((u) => u.Owner == null);
-                if (unitsRise.Count() > 0 && Units.Count < Config.MaxUnitCount)
+                if (unitsRise.Count() > 0 && Units.Count < _config.MaxUnitCount)
                 {
                     unitsRise = unitsRise.OrderBy((u) => (AvgPosition - u.Position).SqrLength());
                     foreach (var unit in unitsRise)
                         unit.Rise(this);
-                    RiseCount++;
+                    _riseCount++;
                 }
                 else
                     foreach (var unit in Units)
                         unit.Heal();
             }
 
-            var attack = InputMove.SqrLength() < Config.InputDeadzone;
+            var attack = _inputMove.SqrLength() < _config.InputDeadzone;
             CalculatePositions(attack);
 
             //process units

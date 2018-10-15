@@ -8,7 +8,7 @@ namespace Game
 {
     public static class UnitPosition
     {
-        private static readonly Vector2[][] Positions = new Vector2[][]
+        private static readonly Vector2[][] _positions = new Vector2[][]
         {
             new Vector2[] { new Vector2(0, 0), },
             new Vector2[] { new Vector2(-0.545, 0), new Vector2(0.545, 0), },
@@ -30,9 +30,9 @@ namespace Game
 
         public static List<Vector2> GetPositions(int count)
         {
-            if (count < 1 || count > Positions.Length)
+            if (count < 1 || count > _positions.Length)
                 throw new ArgumentOutOfRangeException(nameof(count));
-            return Positions[count - 1].ToList();
+            return _positions[count - 1].ToList();
         }
     }
 }
