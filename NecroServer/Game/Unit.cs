@@ -158,7 +158,7 @@ namespace Game
 
         public void Rise(Player player)
         {
-            if (Owner != null || player.Units.Count >= Config.MaxUnitCount)
+            if (Owner != null || (player.Units.Count >= Config.MaxUnitCount && !player.IsNeutrall))
                 return;
 
             Logger.Log($"GAME player '{player.Name}' rised unit {UnitId}");

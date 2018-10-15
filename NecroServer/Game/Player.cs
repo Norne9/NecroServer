@@ -5,6 +5,7 @@ using System.Linq;
 using GameMath;
 using NecroServer;
 using Packets;
+using NecroServer.Utils;
 
 namespace Game
 {
@@ -13,6 +14,7 @@ namespace Game
         public int NetworkId { get; }
         public long UserId { get; }
         public bool IsAI { get => UserId < 0; }
+        public bool IsNeutrall { get => UserId < -1000; }
         public string Name { get; }
         public bool DoubleUnits { get; }
         public bool IsAlive { get => Units.Count > 0; }
@@ -39,6 +41,8 @@ namespace Game
             Name = name;
             DoubleUnits = doubleUnits;
             Config = config;
+
+            if (IsNeutrall) UnitsEffect = Effect.Neutrall();
         }
 
         public PlayerInfo GetPlayerInfo() =>
@@ -59,9 +63,25 @@ namespace Game
             InputRise = rise;
         }
 
+        private void NeutrallUpdate(World world)
+        {
+            //process units
+            for (int i = Units.Count - 1; i >= 0; i--)
+            {
+                //Update unit
+                Units[i].Update(world, Units[i].Position + RandomPosition.GetRandomPosition() * 2f, true);
+            }
+            AvgPosition = new Vector2(-1000, -1000);
+        }
+
         public void Update(World world)
         {
             if (!IsAlive) return;
+            if (IsNeutrall)
+            {
+                NeutrallUpdate(world);
+                return;
+            }
             PlayerStatus.AliveTime += world.DeltaTime;
 
             //Check effect time
@@ -86,8 +106,26 @@ namespace Game
                         unit.Heal();
             }
 
-            //get input for units
             var attack = InputMove.SqrLength() < Config.InputDeadzone;
+            CalculatePositions(attack);
+
+            //process units
+            for (int i = Units.Count - 1; i >= 0; i--)
+            {
+                //Update unit
+                Units[i].Update(world, Units[i].TargetPos.move, attack);
+            }
+
+            //Update avg position
+            AvgPosition = new Vector2(0, 0);
+            foreach (var unit in Units)
+                AvgPosition += unit.Position;
+            AvgPosition /= Units.Count;
+        }
+
+        private void CalculatePositions(bool attack)
+        {
+            //get input for units
             var poses = UnitPosition.GetPositions(Units.Count);
             var movePoses = ProcessPositions(poses, SmallInput, !attack);
 
@@ -106,19 +144,6 @@ namespace Game
                 }
                 movePoses.Remove(unit.TargetPos);
             }
-
-            //process units
-            for (int i = Units.Count - 1; i >= 0; i--)
-            {
-                //Update unit
-                Units[i].Update(world, Units[i].TargetPos.move, attack);
-            }
-
-            //Update avg position
-            AvgPosition = new Vector2(0, 0);
-            foreach (var unit in Units)
-                AvgPosition += unit.Position;
-            AvgPosition /= Units.Count;
         }
 
         private List<(Vector2 stay, Vector2 move)> ProcessPositions(List<Vector2> positions, Vector2 dir, bool move)
@@ -156,6 +181,7 @@ namespace Game
 
         public void TakeRune(Rune rune)
         {
+            if (IsNeutrall) return;
             UnitsEffect = rune.GetEffect();
         }
     }

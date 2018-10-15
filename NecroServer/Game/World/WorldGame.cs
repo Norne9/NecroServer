@@ -21,6 +21,8 @@ namespace Game
                 Players.Add(aiPlayer.NetworkId, aiPlayer);
             }
 
+            AddNeutrallPlayer();
+
             //Rise units for players
             foreach (var player in Players.Values)
             {
@@ -53,6 +55,15 @@ namespace Game
         }
         private Unit NearUnit(Unit unit) =>
             Units.Where((u) => u.Owner == null).OrderBy((u) => (u.Position - unit.Position).SqrLength()).First();
+
+        private void AddNeutrallPlayer()
+        {
+            var nPlayer = AI.GetNeutrallPlayer(Config);
+            Players.Add(nPlayer.NetworkId, nPlayer);
+            foreach (var unit in Units)
+                if (unit is UnitBear)
+                    unit.Rise(nPlayer);
+        }
 
         public void Update()
         {

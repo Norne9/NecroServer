@@ -1,4 +1,5 @@
 ﻿using NecroServer;
+using NecroServer.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -36,8 +37,17 @@ namespace Game
             return new Player(id, id, name, false, config);
         }
 
+        public static Player GetNeutrallPlayer(Config config)
+        {
+            var id = -2000 + AiUserId--;
+            var name = "Neutrall";
+            return new Player(id, id, name, false, config);
+        }
+
         public static void MakeStep(Config config, Player player, World world)
         {
+            if (player.IsNeutrall) return;
+
             var nearUnits = world.OverlapUnits(player.AvgPosition, config.ViewRange);
             var enemyUnits = world.OverlapUnits(player.AvgPosition, player.Units.FirstOrDefault()?.CurrentStats.ViewRadius ?? 1f)
                 .Where((u) => u.Owner != null && u.Owner != player);
@@ -47,7 +57,9 @@ namespace Game
             bool rise = neutralUnits.Count() > 0;
             bool goCenter = !fight && player.AvgPosition.SqrLength() * 1.3f > world.ZoneRadius * world.ZoneRadius;
 
-            Vector2 inputDir = (nearUnits.Where((u) => u.Owner == null).FirstOrDefault()?.Position ?? Vector2.Empty) - player.AvgPosition;
+            var rndDir = RandomPosition.GetRandomPosition(byte.MaxValue);
+            Vector2 inputDir = (nearUnits.Where((u) => u.Owner == null).FirstOrDefault()?.Position ?? rndDir) - player.AvgPosition;
+            if (player.GetCooldown() > 0f) inputDir = rndDir;
             if (enemyUnits.Any())
             {
                 inputDir = Vector2.Empty;

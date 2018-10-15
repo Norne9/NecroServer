@@ -47,6 +47,16 @@ namespace Game
             return new Effect(2, stealthStats, 20f, RuneType.Stealth, false, true);
         }
 
+        public static Effect Neutrall()
+        {
+            var neutrallStats = UnitStats.GetDefaultEffect();
+            neutrallStats.ViewRadius = 3f;
+            neutrallStats.TakeDamageMultiplier = 0.4f;
+            neutrallStats.Damage = 2f;
+            neutrallStats.MoveSpeed = 0.5f;
+            return new Effect(3, neutrallStats, 1f, RuneType.None, false, false);
+        }
+
         public static void AddEffect(List<Effect> effects, Effect effect)
         {
             var same = effects.Where((e) => e.EffectId == effect.EffectId).FirstOrDefault();
