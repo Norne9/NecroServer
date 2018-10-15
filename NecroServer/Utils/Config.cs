@@ -16,7 +16,7 @@ namespace NecroServer
         public float EndWaitTime { get; set; } = 15f;
 
         public string DiscordLog { get; set; } = null;
-        public string ConnectionKey { get; set; } = "Release_v0.2";
+        public string ConnectionKey { get; set; } = "Release_v0.1";
         public int DiscordAll { get; set; } = 0;
 
         public string MasterServer { get; set; } = "http://85.143.173.253:8856/";
@@ -31,8 +31,6 @@ namespace NecroServer
         public int MaxWorldScale { get; set; } = 80;
         public int MinWorldScale { get; set; } = 60;
 
-        public float RuneTime { get; set; } = 20f;
-
         public float UnitRange { get; set; } = 0.98f;
         public float ObstacleRange { get; set; } = 1.05f;
         public float RuneRange { get; set; } = 0.88f;
@@ -43,10 +41,10 @@ namespace NecroServer
         public float RiseCooldown { get; set; } = 10f;
         public float RiseAddCooldown { get; set; } = 0.6f;
 
-        public float HealValue { get; set; } = 0.2f;
+        public float HealValue { get; set; } = 0.33f;
         public float RandomDamage { get; set; } = 0.1f;
 
-        public float ZoneDps { get; set; } = 12f;
+        public float ZoneDps { get; set; } = 14f;
 
         public float InputDeadzone { get; set; } = 0.001f;
 
