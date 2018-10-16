@@ -11,11 +11,11 @@ namespace Game
         public float EffectTime { get; }
         public DateTime EndTime { get; }
         public UnitStats StatsChange { get; }
-        public RuneType VisualEffect { get; }
+        public VisualEffect VisualEffect { get; }
         public bool RemoveByDamage { get; }
         public bool RemoveByAttack { get; }
 
-        public Effect(int id, UnitStats stats, float time, RuneType effect, bool dmgRemove, bool atcRemove)
+        public Effect(int id, UnitStats stats, float time, VisualEffect effect, bool dmgRemove, bool atcRemove)
         {
             EffectId = id;
             StatsChange = stats;
@@ -30,21 +30,21 @@ namespace Game
         {
             var ddStats = UnitStats.GetDefaultEffect();
             ddStats.Damage = 2f;
-            return new Effect(0, ddStats, 20f, RuneType.Damage, false, false);
+            return new Effect(0, ddStats, 20f, VisualEffect.Damage, false, false);
         }
 
         public static Effect Haste()
         {
             var hasteStats = UnitStats.GetDefaultEffect();
             hasteStats.MoveSpeed = 2f;
-            return new Effect(1, hasteStats, 20f, RuneType.Haste, false, false);
+            return new Effect(1, hasteStats, 20f, VisualEffect.Haste, false, false);
         }
 
         public static Effect Stealth()
         {
             var stealthStats = UnitStats.GetDefaultEffect();
             stealthStats.UnitVisible = false;
-            return new Effect(2, stealthStats, 20f, RuneType.Stealth, false, true);
+            return new Effect(2, stealthStats, 20f, VisualEffect.Stealth, false, true);
         }
 
         public static Effect Neutrall()
@@ -54,7 +54,7 @@ namespace Game
             neutrallStats.TakeDamageMultiplier = 0.4f;
             neutrallStats.Damage = 2f;
             neutrallStats.MoveSpeed = 0.5f;
-            return new Effect(3, neutrallStats, 1f, RuneType.None, false, false);
+            return new Effect(3, neutrallStats, 1f, VisualEffect.None, false, false);
         }
 
         public static void AddEffect(List<Effect> effects, Effect effect)
@@ -67,10 +67,10 @@ namespace Game
         public static void ProcessEffects(List<Effect> effects) =>
             effects.RemoveAll((e) => DateTime.Now > e.EndTime);
 
-        public static RuneType GetVisual(List<Effect> effects)
+        public static VisualEffect GetVisual(List<Effect> effects)
         {
             if (effects.Count == 0)
-                return RuneType.None;
+                return VisualEffect.None;
             else
                 return effects.First().VisualEffect;
         }

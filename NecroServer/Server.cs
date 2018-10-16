@@ -73,6 +73,7 @@ namespace NecroServer
 
             //create player
             var player = new Player(clientData.UserId, peer.GetUId(), clientData.Name, clientData.DoubleUnits, _config);
+            player.UnitSkins = clientData.UnitSkins;
             _players.Add(peer.GetUId(), player);
             if (_players.Count == 1)
             {

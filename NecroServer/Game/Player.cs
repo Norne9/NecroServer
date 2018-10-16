@@ -13,20 +13,22 @@ namespace Game
     {
         public int NetworkId { get; }
         public long UserId { get; }
-        public bool IsAI { get => UserId < 0; }
-        public bool IsNeutrall { get => UserId < -1000; }
         public string Name { get; }
         public bool DoubleUnits { get; }
+
         public bool IsAlive { get => Units.Count > 0; }
+        public bool IsAI { get => UserId < 0; }
+        public bool IsNeutrall { get => UserId < -1000; }
 
         public List<Unit> Units { get; private set; } = new List<Unit>();
         public Vector2 AvgPosition { get; private set; } = new Vector2(0, 0);
         public Effect UnitsEffect { get; private set; } = null;
 
+        public Dictionary<byte, byte> UnitSkins { get; set; } = new Dictionary<byte, byte>();
         public readonly PlayerStatus PlayerStatus = new PlayerStatus();
 
-        private Vector2 _inputMove = new Vector2(0, 0);
         public Vector2 SmallInput { get; private set; } = new Vector2(0, 1);
+        private Vector2 _inputMove = new Vector2(0, 0);
         private bool _inputRise = false;
 
         private DateTime _lastRise = DateTime.Now.AddYears(-1);
@@ -91,19 +93,28 @@ namespace Game
             //Check rise or heal
             if (_inputRise && GetCooldown() < 0.001f)
             {
-                _lastRise = DateTime.Now;
                 var unitsRise = world.OverlapUnits(AvgPosition, _config.RiseRadius)
                     .Where((u) => u.Owner == null);
-                if (unitsRise.Count() > 0 && Units.Count < _config.MaxUnitCount)
+                var hasRise = unitsRise.Count() > 0 && Units.Count < _config.MaxUnitCount;
+
+                if (hasRise) //Rise
                 {
                     unitsRise = unitsRise.OrderBy((u) => (AvgPosition - u.Position).SqrLength());
                     foreach (var unit in unitsRise)
                         unit.Rise(this);
+                }
+
+                //Heal
+                bool hasHeal = false;
+                foreach (var unit in Units)
+                    hasHeal |= unit.Heal(!hasRise);
+
+                //Increase cooldown
+                if (hasRise || hasHeal)
+                {
+                    _lastRise = DateTime.Now;
                     _riseCount++;
                 }
-                else
-                    foreach (var unit in Units)
-                        unit.Heal();
             }
 
             var attack = _inputMove.SqrLength() < _config.InputDeadzone;

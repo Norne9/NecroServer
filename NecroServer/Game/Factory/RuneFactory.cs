@@ -8,7 +8,7 @@ namespace Game
     {
         public static Rune MakeRune()
         {
-            return new Rune((RuneType)GameMath.MathF.RandomInt((int)RuneType.None + 1, (int)RuneType.MAX));
+            return new Rune((VisualEffect)GameMath.MathF.RandomInt((int)VisualEffect.None + 1, (int)VisualEffect.MAX));
         }
     }
 }

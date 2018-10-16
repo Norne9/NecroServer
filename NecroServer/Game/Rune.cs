@@ -8,24 +8,24 @@ namespace Game
     public class Rune : PhysicalObject
     {
         public const float RuneRadius = 0.3f;
-        private RuneType _type = RuneType.None;
+        private VisualEffect _type = VisualEffect.None;
 
         public Effect GetEffect()
         {
             switch (_type)
             {
-                case RuneType.Damage:
+                case VisualEffect.Damage:
                     return Effect.DoubleDamage();
-                case RuneType.Haste:
+                case VisualEffect.Haste:
                     return Effect.Haste();
-                case RuneType.Stealth:
+                case VisualEffect.Stealth:
                     return Effect.Stealth();
                 default:
                     return null;
             }
         }
 
-        public Rune(RuneType type)
+        public Rune(VisualEffect type)
         {
             _type = type;
             Radius = RuneRadius;

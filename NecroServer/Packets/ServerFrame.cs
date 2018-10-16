@@ -10,6 +10,8 @@ namespace Packets
         public float ZoneSize { get; set; }
         public int AlivePlayers { get; set; }
         public float Cooldown { get; set; }
+        public VisualEffect VisualEffect { get; set; }
+        public float VisualEffectTime { get; set; }
         public PlayerCameraInfo[] PlayerCameras { get; set; }
         public UnitInfo[] Units { get; set; }
         public RuneInfo[] Runes { get; set; }

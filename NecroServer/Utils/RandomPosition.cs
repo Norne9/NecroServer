@@ -22,7 +22,7 @@ namespace NecroServer.Utils
 
         private Vector2 GetPos(int offset)
         {
-            float t = (float)(DateTime.Now - _startTime).TotalSeconds / 5f;
+            float t = (float)(DateTime.Now - _startTime).TotalSeconds / 3f;
             int i1 = (int)System.MathF.Floor(t) + offset;
             int i2 = i1 + 1;
             i1 %= _positions.Length;

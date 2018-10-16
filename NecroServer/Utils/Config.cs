@@ -16,7 +16,7 @@ namespace NecroServer
         public float EndWaitTime { get; set; } = 15f;
 
         public string DiscordLog { get; set; } = null;
-        public string ConnectionKey { get; set; } = "Release_v0.1";
+        public string ConnectionKey { get; set; } = "Release_v0.2";
         public int DiscordAll { get; set; } = 0;
 
         public string MasterServer { get; set; } = "http://85.143.173.253:8856/";
@@ -41,7 +41,7 @@ namespace NecroServer
         public float RiseCooldown { get; set; } = 10f;
         public float RiseAddCooldown { get; set; } = 0.6f;
 
-        public float HealValue { get; set; } = 0.33f;
+        public float HealValue { get; set; } = 0.2f;
         public float RandomDamage { get; set; } = 0.1f;
 
         public float ZoneDps { get; set; } = 14f;

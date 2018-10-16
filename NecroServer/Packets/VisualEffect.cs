@@ -1,6 +1,6 @@
 ﻿namespace Game
 {
-    public enum RuneType : byte
+    public enum VisualEffect : byte
     {
         None = 0,
         Damage,

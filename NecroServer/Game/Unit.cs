@@ -24,6 +24,11 @@ namespace Game
         public Player Owner { get; private set; } = null;
         public bool AttackAnimation { get; private set; } = false;
 
+        public bool Upgraded { get; private set; } = false;
+        public byte UnitSkin { get; private set; } = 0;
+
+        public int Kills { get; set; } = 0;
+
         private readonly List<Effect> _unitEffects = new List<Effect>();
 
         private float _rotation = 0f;
@@ -48,19 +53,33 @@ namespace Game
             _rotation = GameMath.MathF.RandomFloat(0f, GameMath.MathF.PI / 2f);
         }
 
-        public UnitInfo GetUnitInfo(World world, Player player) =>
-            new UnitInfo()
+        public UnitInfo GetUnitInfo(World world, Player player)
+        {
+            var playerOwned = Owner == player;
+            var visualEffect = Owner?.UnitsEffect?.VisualEffect ?? Effect.GetVisual(_unitEffects);
+            return new UnitInfo()
             {
                 UnitId = UnitId,
                 UnitMesh = UnitMesh,
                 PosX = (short)(Position.X / world.WorldScale * short.MaxValue),
                 PosY = (short)(Position.Y / world.WorldScale * short.MaxValue),
-                Rot = (byte)((_rotation > 0 ? _rotation : _rotation + GameMath.MathF.PI * 2f) / GameMath.MathF.PI / 2f * byte.MaxValue),
-                Health = (byte)(Health / CurrentStats.MaxHealth * byte.MaxValue),
-                Rune = Owner?.UnitsEffect?.VisualEffect ?? Effect.GetVisual(_unitEffects),
+                
                 Attack = AttackAnimation,
-                PlayerOwned = Owner == player
+                PlayerOwned = playerOwned,
+                HasEffect = visualEffect != VisualEffect.None,
+                HasHealth = playerOwned && Health > 0,
+                Alive = Health > 0,
+                HasExp = playerOwned && !Upgraded,
+                Upgrade = Upgraded,
+
+                Health = (byte)(Health / CurrentStats.MaxHealth * byte.MaxValue),
+                Rot = (byte)((_rotation > 0 ? _rotation : _rotation + GameMath.MathF.PI * 2f) / GameMath.MathF.PI / 2f * byte.MaxValue),
+                VisualEffect = visualEffect,
+                Target = _myTarget?.UnitId ?? UnitId,
+                Exp = (byte)(Kills / (float)CurrentStats.KillsToUpgrade * byte.MaxValue),
+                UnitSkin = UnitSkin,
             };
+        }
 
         public void Update(World world, Vector2 cmdPos, bool cmdAttack)
         {
@@ -153,6 +172,23 @@ namespace Game
             if (Owner?.UnitsEffect != null)
                 result *= Owner.UnitsEffect.StatsChange;
 
+            if (Kills > result.KillsToUpgrade)
+            {
+                Upgraded = true;
+                if (Owner?.UnitSkins.ContainsKey(UnitMesh) ?? false)
+                    UnitSkin = Owner.UnitSkins[UnitMesh];
+                else
+                    UnitSkin = 1;
+            }
+            else
+            {
+                Upgraded = false;
+                UnitSkin = 0;
+            }
+
+            if (Upgraded)
+                result *= UnitStats.GetUpgradeStats();
+
             return result;
         }
 
@@ -170,12 +206,14 @@ namespace Game
             _lastRise = DateTime.Now;
         }
 
-        public void Heal()
+        public bool Heal(bool doub = false)
         {
-            if (Health < CurrentStats.MaxHealth)
-                Health += CurrentStats.MaxHealth * _config.HealValue;
+            bool heal = Health < CurrentStats.MaxHealth;
+            if (heal)
+                Health += CurrentStats.MaxHealth * _config.HealValue * (doub ? 2f : 1f);
             if (Health > CurrentStats.MaxHealth)
                 Health = CurrentStats.MaxHealth;
+            return heal;
         }
 
         public void TakeDamage(Unit damager, float damage)
@@ -201,11 +239,17 @@ namespace Game
             if (!IsAlive) //Die
             {
                 Health = 0f;
+                Kills = 0;
+                UnitSkin = 0;
+
                 _unitEffects.Clear();
                 if (damager == null)
                     Logger.Log($"GAME unit {UnitId}@{Owner?.Name ?? "null"} killed by zone");
                 else
+                {
                     Logger.Log($"GAME unit {damager.UnitId}@{damager.Owner?.Name ?? "null"} killed {UnitId}@{Owner?.Name ?? "null"}");
+                    damager.Kills++;
+                }
                 Owner?.Units.Remove(this);
                 Owner = null;
                 AttackAnimation = false;

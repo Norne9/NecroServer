@@ -11,5 +11,6 @@ namespace Packets
         public float DamageReceive { get; set; }
         public int UnitRise { get; set; }
         public int UnitKill { get; set; }
+        public int MoneyEarn { get; set; }
     }
 }

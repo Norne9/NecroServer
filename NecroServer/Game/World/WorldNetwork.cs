@@ -66,6 +66,8 @@ namespace Game
                 ZoneSize = ZoneRadius,
                 AlivePlayers = _alivePlayers,
                 Cooldown = player.GetCooldown(),
+                VisualEffect = player.UnitsEffect?.VisualEffect ?? VisualEffect.None,
+                VisualEffectTime = (float)(DateTime.Now - (player.UnitsEffect?.EndTime ?? DateTime.Now)).TotalSeconds,
                 PlayerCameras = visiblePlayers,
                 Units = visibleUnitsData,
                 Runes = visibleRunes
@@ -81,17 +83,20 @@ namespace Game
                 DamageDeal = player.PlayerStatus.DamageDeal,
                 DamageReceive = player.PlayerStatus.DamageReceive,
                 UnitRise = player.PlayerStatus.UnitRise,
-                UnitKill = player.PlayerStatus.UnitKill
+                UnitKill = player.PlayerStatus.UnitKill,
+                MoneyEarn = player.PlayerStatus.MoneyEarn,
             };
 
         public ServerMap GetServerMap() =>
             new ServerMap()
             {
+                GameMode = GameMode.Royale, //TODO: Game mode selection
                 Scale = WorldScale,
                 Obstacles = _obstacles.Select((o) => o.GetObstacleInfo()).ToArray(),
                 MaxPlayers = _config.MaxPlayers,
                 MaxUnits = _config.MaxUnitCount,
                 MapType = _mapType,
+                RiseRadius = _config.RiseRadius,
                 Runes = _runes.Select((r) => r.GetRuneInfo()).ToArray(),
                 Units = _units.Select((u) => u.GetUnitInfo(this, null)).ToArray(),
             };

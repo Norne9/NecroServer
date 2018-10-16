@@ -20,6 +20,7 @@ namespace Game
         public float TakeDamageMultiplier { get; set; }
         public float HealthPerSecond { get; set; }
         public bool UnitVisible { get; set; }
+        public int KillsToUpgrade { get; set; }
 
         public UnitStats(UnitStats stats)
         {
@@ -33,6 +34,7 @@ namespace Game
             TakeDamageMultiplier = stats.TakeDamageMultiplier;
             HealthPerSecond = stats.HealthPerSecond;
             UnitVisible = stats.UnitVisible;
+            KillsToUpgrade = stats.KillsToUpgrade;
         }
 
         public static UnitStats GetDefaultStats() =>
@@ -48,6 +50,7 @@ namespace Game
                 TakeDamageMultiplier = 1f,
                 HealthPerSecond = 0f,
                 UnitVisible = true,
+                KillsToUpgrade = 5,
             };
 
         public static UnitStats GetDefaultEffect() =>
@@ -63,7 +66,17 @@ namespace Game
                 TakeDamageMultiplier = 1f,
                 HealthPerSecond = 0f,
                 UnitVisible = true,
+                KillsToUpgrade = 5,
             };
+
+        public static UnitStats GetUpgradeStats()
+        {
+            var upgradeStats = GetDefaultEffect();
+            upgradeStats.TakeDamageMultiplier = 0.7f;
+            upgradeStats.Damage = 1.3f;
+            upgradeStats.MoveSpeed = 1.3f;
+            return upgradeStats;
+        }
 
         public static UnitStats operator *(UnitStats u1, UnitStats u2) =>
             new UnitStats()
@@ -78,6 +91,7 @@ namespace Game
                 TakeDamageMultiplier = u1.TakeDamageMultiplier * u2.TakeDamageMultiplier,
                 HealthPerSecond = u1.HealthPerSecond + u2.HealthPerSecond,
                 UnitVisible = u1.UnitVisible && u2.UnitVisible,
+                KillsToUpgrade = u1.KillsToUpgrade < u2.KillsToUpgrade ? u1.KillsToUpgrade : u2.KillsToUpgrade,
             };
     }
 }
