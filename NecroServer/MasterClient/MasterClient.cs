@@ -55,7 +55,7 @@ namespace NecroServer
             return new RespClient();
         }
 
-        public async Task SendState(ServerState state, int playerCount, int totalPlayers, string version)
+        public async Task SendState(ServerState state, int playerCount, int totalPlayers, string version, GameMode mode)
         {
             try
             {
@@ -66,12 +66,14 @@ namespace NecroServer
                     TotalPlayers = totalPlayers,
                     Port = _config.Port,
                     ServerVersion = version,
+                    GameMode = (int)mode,
                 });
                 await _httpClient.PostAsync(_config.MasterServer + "state", new StringContent(json, Encoding.UTF8, "application/json"));
             }
             catch (Exception e)
             {
                 Logger.Log($"MASTER send state error:\n{e.ToString()}", true);
+                await Task.Delay(10000);
             }
         }
 

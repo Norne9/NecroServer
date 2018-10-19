@@ -302,11 +302,11 @@ namespace NecroServer
             switch (_gameMode)
             {
                 case GameMode.Royale:
-                    await _masterClient.SendState(_serverState, _players.Where((p) => !p.Value.IsAI).Count(), _config.MaxPlayers, _config.ConnectionKey);
+                    await _masterClient.SendState(_serverState, _players.Where((p) => !p.Value.IsAI).Count(), _config.MaxPlayers, _config.ConnectionKey, _gameMode);
                     break;
                 case GameMode.Free:
                     int cnt = _players.Where((p) => !p.Value.IsAI).Count();
-                    await _masterClient.SendState(ServerState.WaitingPlayers, cnt, _world.GetAvaliablePlaces() + cnt, _config.ConnectionKey);
+                    await _masterClient.SendState(ServerState.WaitingPlayers, cnt, _world.GetAvaliablePlaces() + cnt, _config.ConnectionKey, _gameMode);
                     break;
             }
         }
