@@ -8,5 +8,6 @@ namespace MasterReqResp
     {
         public long UserId { get; set; } = -1;
         public int Rating { get; set; } = 0;
+        public int GoldEarned { get; set; } = 0;
     }
 }

@@ -71,12 +71,12 @@ namespace MasterServer
             if (user == null) //Unknown user
                 return new RespStatus();
 
-            user.UpdateUser(status);
+            var moneyEarn = user.UpdateUser(status);
             if (!Users.ContainsKey(user.UserId))
                 Users.Add(user.UserId, user);
             await UpdateUsers();
 
-            return new RespStatus() { Rating = user.WorldPlace, UserId = user.UserId };
+            return new RespStatus() { Rating = user.WorldPlace, UserId = user.UserId, GoldEarned = moneyEarn };
         }
         public async Task<RespClient> GetClinetData(ReqClient reqClient, List<Skin> skins)
         {

@@ -10,6 +10,7 @@ namespace MasterServer
     public class User
     {
         public const int RatingGameCount = 64;
+        public const int LastPlace = 30;
 
         public long UserId { get; set; } = 0;
         public string UserKey { get; set; } = "";
@@ -187,7 +188,7 @@ namespace MasterServer
             SelectedSkins = selected.Select((s) => s.SkinId).ToList();
         }
 
-        public void UpdateUser(ReqSendStatus status)
+        public int UpdateUser(ReqSendStatus status)
         {
             LastGame = DateTime.Now;
             if (status.Place == 1)
@@ -200,6 +201,8 @@ namespace MasterServer
             TotalUnitRise += status.UnitRise;
 
             GamePlaces.Enqueue(status.Place);
+            while (GamePlaces.Count < RatingGameCount)
+                GamePlaces.Enqueue(LastPlace);
             while (GamePlaces.Count > RatingGameCount)
                 GamePlaces.Dequeue();
 
@@ -212,7 +215,9 @@ namespace MasterServer
 
             GameCount++;
             Rating = GamePlaces.Select((p) => GetScore(p)).Sum();
-            Money += Math.Max(0, GetScore(status.Place));
+            double moneyEarn = Math.Max(0, GetScore(status.Place));
+            Money += moneyEarn;
+            return (int)moneyEarn;
         }
 
         private static double GetScore(int place)

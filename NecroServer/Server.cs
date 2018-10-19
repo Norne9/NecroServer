@@ -176,6 +176,7 @@ namespace NecroServer
                 if (result.UserId != id)
                     Logger.Log($"MASTER failed send player #{id} status");
                 status.Rating = result.Rating;
+                status.MoneyEarn = result.GoldEarned;
             });
         }
 
