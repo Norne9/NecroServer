@@ -75,7 +75,7 @@ namespace Game
             _unitsTree = new OcTree(_worldZone, _units, true);
 
             //Get alive players count
-            _alivePlayers = _players.Values.Where((p) => p.IsAlive).Count();
+            _alivePlayers = _players.Values.Where((p) => p.IsAlive && !p.IsNeutrall).Count();
 
             //Kill all units if we have winner
             if (_alivePlayers == 1)

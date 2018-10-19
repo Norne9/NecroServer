@@ -11,7 +11,7 @@ namespace Game
         {
             MaxHealth = 150f,
             AttackDelay = 0.76f,
-            Damage = 10f
+            Damage = 12f
         };
         public UnitOrk(Config config, ushort unitId) : base(config, unitId, UnitFactory.MeshOrk, _orkStats)
         { }

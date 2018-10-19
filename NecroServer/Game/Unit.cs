@@ -122,7 +122,7 @@ namespace Game
                         world.MoveUnit(this, tPos);
                     }
                 }
-                else
+                else if (_myTarget == null)
                     world.MoveUnit(this, Position); //stay
             }
             else //Just move
@@ -147,7 +147,7 @@ namespace Game
 
             //Apply health change
             if (CurrentStats.HealthPerSecond != 0)
-                TakeDamage(this, -CurrentStats.HealthPerSecond);
+                TakeDamage(this, -CurrentStats.HealthPerSecond * world.DeltaTime);
         }
 
         protected virtual Unit SelectTarget(World world)
@@ -172,7 +172,7 @@ namespace Game
             if (Owner?.UnitsEffect != null)
                 result *= Owner.UnitsEffect.StatsChange;
 
-            if (Kills > result.KillsToUpgrade)
+            if (Kills >= result.KillsToUpgrade)
             {
                 Upgraded = true;
                 if (Owner?.UnitSkins.ContainsKey(UnitMesh) ?? false)
@@ -294,11 +294,11 @@ namespace Game
                     if (!(obj is Unit unit))
                     {
                         poses.Add(obj.Position);
-                        pushPower = pushPower < 0.9f ? 0.9f : pushPower;
+                        pushPower = pushPower < 0.7f ? 0.7f : pushPower;
                         continue;
                     }
                     if (unit.Owner == null || obj == this) continue;
-                    if (unit.Owner != Owner) pushPower = pushPower < 2.0f ? 2.0f : pushPower;
+                    if (unit.Owner != Owner) pushPower = pushPower < 0.98f ? 0.98f : pushPower;
                     poses.Add(unit.Position);
                 }
             }

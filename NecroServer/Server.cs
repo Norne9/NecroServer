@@ -36,7 +36,7 @@ namespace NecroServer
             _config = config;
             _server = new NetManager(this, _config.MaxPlayers, _config.ConnectionKey)
             {
-                UpdateTime = _config.UpdateDelay,
+                UpdateTime = 10,
             };
 
             Logger.Log($"SERVER register packets");

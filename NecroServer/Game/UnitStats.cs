@@ -21,6 +21,7 @@ namespace Game
         public float HealthPerSecond { get; set; }
         public bool UnitVisible { get; set; }
         public int KillsToUpgrade { get; set; }
+        public bool ZoneDamage { get; set; }
 
         public UnitStats(UnitStats stats)
         {
@@ -35,6 +36,7 @@ namespace Game
             HealthPerSecond = stats.HealthPerSecond;
             UnitVisible = stats.UnitVisible;
             KillsToUpgrade = stats.KillsToUpgrade;
+            ZoneDamage = stats.ZoneDamage;
         }
 
         public static UnitStats GetDefaultStats() =>
@@ -50,7 +52,8 @@ namespace Game
                 TakeDamageMultiplier = 1f,
                 HealthPerSecond = 0f,
                 UnitVisible = true,
-                KillsToUpgrade = 5,
+                KillsToUpgrade = 3,
+                ZoneDamage = true,
             };
 
         public static UnitStats GetDefaultEffect() =>
@@ -66,7 +69,8 @@ namespace Game
                 TakeDamageMultiplier = 1f,
                 HealthPerSecond = 0f,
                 UnitVisible = true,
-                KillsToUpgrade = 5,
+                KillsToUpgrade = 3,
+                ZoneDamage = true,
             };
 
         public static UnitStats GetUpgradeStats()
@@ -75,6 +79,7 @@ namespace Game
             upgradeStats.TakeDamageMultiplier = 0.7f;
             upgradeStats.Damage = 1.3f;
             upgradeStats.MoveSpeed = 1.3f;
+            upgradeStats.HealthPerSecond = 5f;
             return upgradeStats;
         }
 
@@ -92,6 +97,7 @@ namespace Game
                 HealthPerSecond = u1.HealthPerSecond + u2.HealthPerSecond,
                 UnitVisible = u1.UnitVisible && u2.UnitVisible,
                 KillsToUpgrade = u1.KillsToUpgrade < u2.KillsToUpgrade ? u1.KillsToUpgrade : u2.KillsToUpgrade,
+                ZoneDamage = u1.ZoneDamage && u2.ZoneDamage,
             };
     }
 }

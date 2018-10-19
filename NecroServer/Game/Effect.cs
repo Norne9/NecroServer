@@ -51,9 +51,11 @@ namespace Game
         {
             var neutrallStats = UnitStats.GetDefaultEffect();
             neutrallStats.ViewRadius = 3f;
-            neutrallStats.TakeDamageMultiplier = 0.4f;
-            neutrallStats.Damage = 2f;
+            neutrallStats.TakeDamageMultiplier = 0.33f;
+            neutrallStats.Damage = 1f;
             neutrallStats.MoveSpeed = 0.5f;
+            neutrallStats.ZoneDamage = false;
+            neutrallStats.HealthPerSecond = 5f;
             return new Effect(3, neutrallStats, 1f, VisualEffect.None, false, false);
         }
 

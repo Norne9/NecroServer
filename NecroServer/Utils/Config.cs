@@ -48,8 +48,8 @@ namespace NecroServer
 
         public float InputDeadzone { get; set; } = 0.001f;
 
-        public float StaticTime { get; set; } = 50f;
-        public float ResizeTime { get; set; } = 60f;
+        public float StaticTime { get; set; } = 90f;
+        public float ResizeTime { get; set; } = 90f;
 
         public Config(string[] args)
         {

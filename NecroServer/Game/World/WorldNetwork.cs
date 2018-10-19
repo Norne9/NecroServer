@@ -67,7 +67,7 @@ namespace Game
                 AlivePlayers = _alivePlayers,
                 Cooldown = player.GetCooldown(),
                 VisualEffect = player.UnitsEffect?.VisualEffect ?? VisualEffect.None,
-                VisualEffectTime = (float)(DateTime.Now - (player.UnitsEffect?.EndTime ?? DateTime.Now)).TotalSeconds,
+                VisualEffectTime = (float)((player.UnitsEffect?.EndTime ?? DateTime.Now) - DateTime.Now).TotalSeconds,
                 PlayerCameras = visiblePlayers,
                 Units = visibleUnitsData,
                 Runes = visibleRunes

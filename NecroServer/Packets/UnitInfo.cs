@@ -31,7 +31,6 @@ namespace Packets
             writer.Put(UnitMesh);
             writer.Put(PosX);
             writer.Put(PosY);
-            writer.Put(Rot);
 
             writer.Put(BoolToByte(
                 Attack,

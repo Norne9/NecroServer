@@ -11,7 +11,7 @@ namespace Game
         {
             MaxHealth = 250f,
             AttackDelay = 0.83f,
-            Damage = 16f
+            Damage = 9f
         };
         public UnitZombie(Config config, ushort unitId) : base(config, unitId, UnitFactory.MeshZombie, _zombieStats)
         { }
