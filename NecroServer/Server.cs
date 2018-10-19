@@ -8,6 +8,8 @@ using LiteNetLib;
 using LiteNetLib.Utils;
 using Packets;
 using Game;
+using MasterReqResp;
+using System.Diagnostics;
 
 namespace NecroServer
 {
@@ -20,12 +22,15 @@ namespace NecroServer
         private NetSerializer _netSerializer;
         
         private World _world;
+        private Dictionary<int, RespClient> _waitingPlayers = new Dictionary<int, RespClient>();
         private Dictionary<int, Player> _players = new Dictionary<int, Player>();
         private Dictionary<int, NetPeer> _peers = new Dictionary<int, NetPeer>();
 
         private ServerState _serverState = ServerState.Started;
         private DateTime _startTime = DateTime.Now;
         private float _waitTime = 0f;
+        private GameMode _gameMode = GameMode.Royale;
+        private Stopwatch _dtTimer = new Stopwatch();
 
         private ConcurrentQueue<Func<Task>> _requestQueue = new ConcurrentQueue<Func<Task>>();
 
@@ -34,7 +39,9 @@ namespace NecroServer
             Logger.Log($"SERVER creating...");
             _masterClient = masterClient;
             _config = config;
-            _server = new NetManager(this, _config.MaxPlayers, _config.ConnectionKey)
+            _gameMode = (GameMode)_config.GameMode;
+
+            _server = new NetManager(this, 100 + _config.MaxPlayers, _config.ConnectionKey)
             {
                 UpdateTime = 10,
             };
@@ -44,8 +51,9 @@ namespace NecroServer
             Packet.Register(_netSerializer);
             _netSerializer.SubscribeReusable<ClientConnection, NetPeer>(OnClientConnection);
             _netSerializer.SubscribeReusable<ClientInput, NetPeer>(OnClientInput);
+            _netSerializer.SubscribeReusable<ClientSpawn, NetPeer>(OnClientSpawn);
 
-            _world = new World(_config);
+            _world = new World(_config, _gameMode);
             _world.OnGameEnd += World_OnGameEnd;
             _world.OnPlayerDead += World_OnPlayerDead;
 
@@ -55,9 +63,9 @@ namespace NecroServer
         private async void OnClientConnection(ClientConnection clientConnection, NetPeer peer)
         {
             //check game state
-            if (_serverState == ServerState.Playing || _serverState == ServerState.EndGame)
+            if (_gameMode == GameMode.Royale && (_serverState == ServerState.Playing || _serverState == ServerState.EndGame))
             {
-                Logger.Log($"SERVER connection attempt during game: {clientConnection.UserId}");
+                Logger.Log($"SERVER connection attempt during game: {clientConnection.UserId}", true);
                 _server.DisconnectPeer(peer);
                 return;
             }
@@ -66,19 +74,26 @@ namespace NecroServer
             var clientData = await _masterClient.RequestClientInfo(clientConnection.UserId, clientConnection.UserKey);
             if (!clientData.Valid)
             {
-                Logger.Log($"SERVER invalid connection attempt: {clientConnection.UserId}");
+                Logger.Log($"SERVER invalid connection attempt: {clientConnection.UserId}", true);
                 _server.DisconnectPeer(peer);
                 return;
             }
 
-            //create player
-            var player = new Player(clientData.UserId, peer.GetUId(), clientData.Name, clientData.DoubleUnits, _config);
-            player.UnitSkins = clientData.UnitSkins;
-            _players.Add(peer.GetUId(), player);
-            if (_players.Count == 1)
+            //add player to wait list
+            if (_gameMode == GameMode.Free)
+                _waitingPlayers.Add(peer.GetUId(), clientData);
+
+            //create player for royale
+            if (_gameMode == GameMode.Royale)
             {
-                _waitTime = _config.PlayerWaitTime;
-                _serverState = ServerState.WaitingPlayers;
+                var player = new Player(clientData.UserId, peer.GetUId(), clientData.Name, clientData.DoubleUnits, _config)
+                { UnitSkins = clientData.UnitSkins };
+                _players.Add(peer.GetUId(), player);
+                if (_players.Count == 1)
+                {
+                    _waitTime = _config.PlayerWaitTime;
+                    _serverState = ServerState.WaitingPlayers;
+                }
             }
 
             //send map
@@ -93,7 +108,7 @@ namespace NecroServer
                 _waitTime = _config.MinWaitTime;
 
             //send player info
-            Logger.Log($"SERVER player '{player.Name}' connected");
+            Logger.Log($"SERVER player '{clientData.Name}' connected");
             SendPlayersInfo();
 
             //Send info to master
@@ -117,10 +132,30 @@ namespace NecroServer
             }
         }
 
+        private void OnClientSpawn(ClientSpawn clientSpawn, NetPeer peer)
+        {
+            if (_gameMode == GameMode.Royale) return;
+            if (!_waitingPlayers.TryGetValue(peer.GetUId(), out var clientData))
+            {
+                Logger.Log($"SERVER unknown peer spawn {peer.GetUId()}");
+                _server.DisconnectPeer(peer);
+            }
+
+            var player = new Player(clientData.UserId, peer.GetUId(), clientData.Name, clientData.DoubleUnits, _config)
+            { UnitSkins = clientData.UnitSkins };
+            _players.Add(peer.GetUId(), player);
+
+            if (_players.Count == 1)
+                StartGame();
+            else
+                _world.AddPlayer(player, true);
+
+            SendPlayersInfo();
+        }
+
         private void OnClientInput(ClientInput input, NetPeer peer)
         {
-            var res = _world.SetInput(peer.GetUId(), input);
-            if (!res) _server.DisconnectPeer(peer);
+            _world.SetInput(peer.GetUId(), input);
         }
 
         private void World_OnGameEnd()
@@ -159,6 +194,10 @@ namespace NecroServer
             Logger.Log($"SERVER started on port {_config.Port}");
             while (_work)
             {
+                //Calculate delta time
+                float deltaTime = (float)_dtTimer.Elapsed.TotalSeconds;
+                _dtTimer.Restart();
+
                 //update network
                 _server.PollEvents();
 
@@ -166,13 +205,13 @@ namespace NecroServer
                 if (_serverState == ServerState.WaitingPlayers)
                 {
                     if (_waitTime < 0f) StartGame();
-                    _waitTime -= _config.UpdateDelay / 1000.0f;
+                    _waitTime -= deltaTime;
                 }
 
                 //update world
                 if (_serverState == ServerState.Playing)
                 {
-                    _world.Update();
+                    _world.Update(deltaTime);
                     foreach (var (netId, player) in _players)
                     {
                         if (player.IsAI) //AI player
@@ -193,6 +232,10 @@ namespace NecroServer
                         else
                             Logger.Log($"SERVER unknown peer {netId}");
                     }
+
+                    //Append ai players
+                    if (_gameMode == GameMode.Free && _world.AppendAiPlayers(_config.MaxAiPlayers))
+                        SendPlayersInfo();
                 }
 
                 //send stats
@@ -206,7 +249,8 @@ namespace NecroServer
                 }
 
                 //Wait
-                await Task.Delay(_config.UpdateDelay);
+                int waitTime = Math.Max(0, _config.UpdateDelay - (int)Math.Ceiling(deltaTime * 1000f));
+                if (waitTime > 1) await Task.Delay(waitTime);
 
 #if DEBUG
                 //Console commands
@@ -253,8 +297,19 @@ namespace NecroServer
                 await SendInfoToMaster();
             }
         }
-        private async Task SendInfoToMaster() =>
-            await _masterClient.SendState(_serverState, _players.Where((p) => !p.Value.IsAI).Count(), _config.MaxPlayers, _config.ConnectionKey);
+        private async Task SendInfoToMaster()
+        {
+            switch (_gameMode)
+            {
+                case GameMode.Royale:
+                    await _masterClient.SendState(_serverState, _players.Where((p) => !p.Value.IsAI).Count(), _config.MaxPlayers, _config.ConnectionKey);
+                    break;
+                case GameMode.Free:
+                    int cnt = _players.Where((p) => !p.Value.IsAI).Count();
+                    await _masterClient.SendState(ServerState.WaitingPlayers, cnt, _world.GetAvaliablePlaces() + cnt, _config.ConnectionKey);
+                    break;
+            }
+        }
 
         public void OnNetworkError(NetEndPoint endPoint, int socketErrorCode)
         {

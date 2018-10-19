@@ -12,41 +12,74 @@ namespace Game
     {
         public void StartGame(Dictionary<int, Player> players)
         {
-            this._players = players;
-            Logger.Log($"GAME starting with {this._players.Count} players");
-            //Add ai players
-            while (this._players.Count < _config.MaxPlayers)
-            {
-                var aiPlayer = AI.GetAiPlayer(_config);
-                this._players.Add(aiPlayer.NetworkId, aiPlayer);
-            }
+            _players = players;
+            Logger.Log($"GAME starting with {_players.Count} players");
 
             AddNeutrallPlayer();
 
             //Rise units for players
-            foreach (var player in this._players.Values)
+            foreach (var player in _players.Values)
+                AddPlayer(player);
+
+            //Add AI players
+            switch (_gameMode)
             {
-                var unit = RandomUnit();
-                unit.Rise(player);
-                if (player.DoubleUnits)
-                {
-                    for (int i = 0; i < _config.AdditionalUnitCount; i++)
-                        NearUnit(unit).Rise(player);
-
-                    var poses = UnitPosition.GetPositions(player.Units.Count);
-                    var avgPosition = new Vector2(0, 0);
-                    foreach (var unit1 in player.Units)
-                        avgPosition += unit1.Position;
-                    avgPosition /= player.Units.Count;
-
-                    for (int i = 0; i < player.Units.Count; i++)
-                        player.Units[i].Position = avgPosition + poses[i];
-                }
+                case GameMode.Royale:
+                    AppendAiPlayers(_config.MaxPlayers);
+                    break;
+                case GameMode.Free:
+                    AppendAiPlayers(_config.MaxAiPlayers);
+                    break;
             }
 
             _startTime = DateTime.Now;
             _worldState = WorldState.Static;
             Logger.Log($"GAME started");
+        }
+
+        public void AddPlayer(Player player, bool randomPlace = false)
+        {
+            if (!_players.ContainsKey(player.NetworkId))
+                _players.Add(player.NetworkId, player);
+
+            var unit = RandomUnit();
+            unit.Rise(player);
+            if (player.DoubleUnits)
+            {
+                for (int i = 0; i < _config.AdditionalUnitCount; i++)
+                    NearUnit(unit).Rise(player);
+
+                var poses = UnitPosition.GetPositions(player.Units.Count);
+                var avgPosition = new Vector2(0, 0);
+
+                if (randomPlace)
+                    avgPosition = GetPointInCircle(ZoneRadius);
+                else
+                {
+                    foreach (var unit1 in player.Units)
+                        avgPosition += unit1.Position;
+                    avgPosition /= player.Units.Count;
+                }
+
+                for (int i = 0; i < player.Units.Count; i++)
+                    player.Units[i].Position = avgPosition + poses[i];
+            }
+        }
+        public bool AppendAiPlayers(int count)
+        {
+            var result = false;
+            var toRemove = new List<int>(_players.Values.Where((u) => u.IsAI && !u.IsAlive).Select((u) => u.NetworkId));
+            result = toRemove.Count() > 0;
+            foreach (var id in toRemove)
+                _players.Remove(id);
+            //Add ai players
+            while (_players.Count < count + 1)
+            {
+                var aiPlayer = AI.GetAiPlayer(_config);
+                AddPlayer(aiPlayer);
+                result = true;
+            }
+            return result;
         }
         private Unit RandomUnit()
         {
@@ -65,11 +98,9 @@ namespace Game
                     unit.Rise(nPlayer);
         }
 
-        public void Update()
+        public void Update(float deltaTime)
         {
-            //Calculate delta time
-            DeltaTime = (float)_dtTimer.Elapsed.TotalSeconds;
-            _dtTimer.Restart();
+            DeltaTime = deltaTime;
 
             //Rebuild unit tree
             _unitsTree = new OcTree(_worldZone, _units, true);
@@ -101,34 +132,42 @@ namespace Game
                 OnGameEnd?.Invoke();
 
             //Zone processing
-            float elapsedTime = (float)(DateTime.Now - _startTime).TotalSeconds;
-            switch (_worldState)
+            switch (_gameMode)
             {
-                case WorldState.Static:
-                    if (elapsedTime > _config.StaticTime)
+                case GameMode.Royale: //Royale mode - process zone
+                    float elapsedTime = (float)(DateTime.Now - _startTime).TotalSeconds;
+                    switch (_worldState)
                     {
-                        _startTime = DateTime.Now;
-                        _worldState = WorldState.Resize;
-                        _beginZoneRadius = ZoneRadius;
-                        Logger.Log($"GAME zone begin");
+                        case WorldState.Static:
+                            if (elapsedTime > _config.StaticTime)
+                            {
+                                _startTime = DateTime.Now;
+                                _worldState = WorldState.Resize;
+                                _beginZoneRadius = ZoneRadius;
+                                Logger.Log($"GAME zone begin");
+                            }
+                            _timeToEnd = _config.StaticTime - elapsedTime;
+                            break;
+                        case WorldState.Resize:
+                            float percent = (_config.ResizeTime - elapsedTime) / _config.ResizeTime;
+                            if (percent < 0f)
+                            {
+                                percent = 0; _targetZoneRadius = 0f;
+                                _startTime = DateTime.Now; _worldState = WorldState.Static;
+                            }
+                            else
+                            {
+                                ZoneRadius = Lerp(_beginZoneRadius, _targetZoneRadius, 1f - percent);
+                                _timeToEnd = _config.ResizeTime - elapsedTime;
+                            }
+                            break;
                     }
-                    _timeToEnd = _config.StaticTime - elapsedTime;
+                    if (_timeToEnd < 0) _timeToEnd = 0;
                     break;
-                case WorldState.Resize:
-                    float percent = (_config.ResizeTime - elapsedTime) / _config.ResizeTime;
-                    if (percent < 0f)
-                    {
-                        percent = 0; _targetZoneRadius = 0f;
-                        _startTime = DateTime.Now; _worldState = WorldState.Static;
-                    }
-                    else
-                    {
-                        ZoneRadius = Lerp(_beginZoneRadius, _targetZoneRadius, 1f - percent);
-                        _timeToEnd = _config.ResizeTime - elapsedTime;
-                    }
+                case GameMode.Free: //Free mode - no zone
+                    _timeToEnd = 0;
                     break;
             }
-            if (_timeToEnd < 0) _timeToEnd = 0;
         }
 
         private float Lerp(float from, float to, float percent) =>

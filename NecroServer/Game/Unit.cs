@@ -122,11 +122,12 @@ namespace Game
                         world.MoveUnit(this, tPos);
                     }
                 }
-                else if (_myTarget == null)
-                    world.MoveUnit(this, Position); //stay
+                else
+                    world.MoveUnit(this, CalcNewPos(Position, CurrentStats.MoveSpeed / 20f, world.DeltaTime)); //stay
             }
             else //Just move
             {
+                _myTarget = null;
                 var tPos = CalcNewPos(cmdPos, CurrentStats.MoveSpeed, world.DeltaTime);
                 lookDirection = (tPos - Position);
                 world.MoveUnit(this, tPos);

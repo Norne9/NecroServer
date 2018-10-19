@@ -28,20 +28,15 @@ namespace Game
             }
         }
 
-        public bool SetInput(int networkId, ClientInput input)
+        public void SetInput(int networkId, ClientInput input)
         {
-            if (_players == null) return true;
+            if (_players == null) return;
             if (_players.ContainsKey(networkId))
-            {
                 _players[networkId].SetInput(new Vector2(input.MoveX, input.MoveY), input.Rise);
-                return true;
-            }
-            else
-            {
-                Logger.Log($"SERVER unknown network id {networkId}");
-                return false;
-            }
         }
+
+        public int GetAvaliablePlaces() =>
+            _units.Where((u) => !u.IsAlive).Count() / (1 + _config.AdditionalUnitCount);
 
         public ServerFrame GetServerFrame(Player player)
         {
@@ -90,7 +85,7 @@ namespace Game
         public ServerMap GetServerMap() =>
             new ServerMap()
             {
-                GameMode = GameMode.Royale, //TODO: Game mode selection
+                GameMode = _gameMode, //TODO: Game mode selection
                 Scale = WorldScale,
                 Obstacles = _obstacles.Select((o) => o.GetObstacleInfo()).ToArray(),
                 MaxPlayers = _config.MaxPlayers,

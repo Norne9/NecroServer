@@ -10,9 +10,10 @@ namespace Game
     {
         private const int MaxTryCount = short.MaxValue;
 
-        public World(Config config)
+        public World(Config config, GameMode gameMode)
         {
             _config = config;
+            _gameMode = gameMode;
 
             Logger.Log("WORLD creating world");
             _mapType = GameMath.MathF.RandomInt(int.MinValue, int.MaxValue);

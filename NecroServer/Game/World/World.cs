@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 using GameMath;
 using NecroServer;
@@ -27,14 +26,15 @@ namespace Game
         private readonly int _mapType;
 
         private readonly Config _config;
-
-        private Stopwatch _dtTimer = new Stopwatch();
+        
         public float DeltaTime { get; private set; } = 0f;
 
         public float ZoneRadius { get; private set; }
         private float _targetZoneRadius = 0f, _beginZoneRadius = 0f;
         private WorldState _worldState = WorldState.Static;
         private DateTime _startTime = DateTime.Now;
+
+        private GameMode _gameMode = GameMode.Royale;
 
         //for clients
         private int _alivePlayers = 0;
