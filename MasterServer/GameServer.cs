@@ -14,6 +14,7 @@ namespace MasterServer
         public int ConnectedPlayers { get; set; } = 0;
         public int TotalPlayers { get; set; } = 0;
         public string Version { get; set; } = "";
+        public int GameMode { get; set; } = 0;
         public DateTime LastData { get; set; } = DateTime.Now;
     }
 }

@@ -10,5 +10,6 @@ namespace MasterReqResp
         public string UserKey { get; set; } = "";
         public string ServerVersion { get; set; } = "";
         public bool DoubleUnits { get; set; } = false;
+        public int GameMode { get; set; } = 0;
     }
 }

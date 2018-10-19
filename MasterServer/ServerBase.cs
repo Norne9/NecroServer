@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MasterReqResp;
 using System.Net;
+using System.Text;
 
 namespace MasterServer
 {
@@ -31,6 +32,7 @@ namespace MasterServer
                     Port = state.Port,
                     TotalPlayers = state.TotalPlayers,
                     Version = state.ServerVersion,
+                    GameMode = state.GameMode,
                 };
                 Servers.Add(server);
             }
@@ -44,13 +46,13 @@ namespace MasterServer
             }
         }
 
-        public GameServer FindServer(string version)
+        public GameServer FindServer(string version, int mode)
         {
             for (int i = Servers.Count - 1; i >= 0; i--)
                 if ((DateTime.Now - Servers[i].LastData).TotalSeconds > Config.ServerTime)
                     Servers.RemoveAt(i);
 
-            var sameVersion = Servers.Where((s) => s.Version == version);
+            var sameVersion = Servers.Where((s) => s.Version == version && s.GameMode == mode);
             var servers = sameVersion.Where((s) => s.InLobby && s.ConnectedPlayers < s.TotalPlayers && s.ConnectedPlayers > 0);
             if (!servers.Any()) servers = sameVersion.Where((s) => s.InLobby && s.ConnectedPlayers < s.TotalPlayers);
 
@@ -59,7 +61,7 @@ namespace MasterServer
 
             if (server == null)
             {
-                Logger.Log($"SRV not enouth servers, version '{version}'", true);
+                Logger.Log($"SRV not enouth servers, version '{version}', mode {mode}", true);
                 DebugServers();
             }
 
@@ -68,12 +70,18 @@ namespace MasterServer
 
         public void DebugServers()
         {
-            var allServers = Servers.Where((s) => (DateTime.Now - s.LastData).TotalSeconds < Config.ServerTime);
-            var onlinePlayers = allServers.Select((s) => s.ConnectedPlayers).Sum();
-            var maxPlayers = allServers.Select((s) => s.TotalPlayers).Sum();
-            Logger.Log($"DEBUG players {onlinePlayers}/{maxPlayers}");
-            var playServers = allServers.Where((s) => !s.InLobby).Count();
-            Logger.Log($"DEBUG count {playServers}/{allServers.Count()}");
+            var allServers = Servers.Where((s) => (DateTime.Now - s.LastData).TotalSeconds < Config.ServerTime)
+                .GroupBy((s) => s.GameMode).ToDictionary(g => g.Key, g => g.ToList());
+            var sb = new StringBuilder();
+            sb.AppendLine("DEBUG server modes");
+            foreach (var mode in allServers.Keys)
+            {
+                var onlinePlayers = allServers[mode].Select((s) => s.ConnectedPlayers).Sum();
+                var maxPlayers = allServers[mode].Select((s) => s.TotalPlayers).Sum();
+                var playServers = allServers[mode].Where((s) => !s.InLobby).Count();
+                sb.AppendLine($"[{mode}] players {onlinePlayers}/{maxPlayers}\tservers {playServers}/{allServers.Count()}");
+            }
+            Logger.Log(sb.ToString());
         }
     }
 }
