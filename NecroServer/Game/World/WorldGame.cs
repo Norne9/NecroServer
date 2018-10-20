@@ -65,7 +65,7 @@ namespace Game
                     player.Units[i].Position = avgPosition + poses[i];
             }
         }
-        public bool AppendAiPlayers(int count)
+        public bool AppendAiPlayers(int count, bool randomPlace = false)
         {
             var result = false;
             var toRemove = new List<int>(_players.Values.Where((u) => u.IsAI && !u.IsAlive).Select((u) => u.NetworkId));
@@ -76,7 +76,7 @@ namespace Game
             while (_players.Count < count + 1)
             {
                 var aiPlayer = AI.GetAiPlayer(_config);
-                AddPlayer(aiPlayer);
+                AddPlayer(aiPlayer, randomPlace);
                 result = true;
             }
             return result;

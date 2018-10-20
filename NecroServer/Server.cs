@@ -235,7 +235,7 @@ namespace NecroServer
                     }
 
                     //Append ai players
-                    if (_gameMode == GameMode.Free && _world.AppendAiPlayers(_config.MaxAiPlayers))
+                    if (_gameMode == GameMode.Free && _world.AppendAiPlayers(_config.MaxAiPlayers, true))
                         SendPlayersInfo();
                 }
 
