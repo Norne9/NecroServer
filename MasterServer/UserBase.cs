@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using MasterReqResp;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace MasterServer
 {
@@ -17,6 +18,8 @@ namespace MasterServer
         private Config _config;
         private MasterData _masterData;
         private int _newUsers = 0;
+
+        private SemaphoreSlim _modifiUsers = new SemaphoreSlim(1, 1);
 
         public UserBase(Config config, MasterData masterData)
         {
@@ -57,11 +60,16 @@ namespace MasterServer
 
         public void DebugUsers()
         {
-            var count10min = _users.Values.Where((u) => (DateTime.Now - u.LastGame).TotalSeconds < _config.DebugTime).Count();
-            var countLeader = _users.Count;
-            var countTotal = UserNumber;
-            Logger.Log($"DEBUG user statistics:\nRegistred: {_newUsers}\n{(_config.DebugTime / 60f).ToString("f0")} Min play: {count10min}\nLeaderboard: {countLeader}\nTotal: {countTotal}");
-            _newUsers = 0;
+            try
+            {
+                var count10min = _users.Values.Where((u) => (DateTime.Now - u.LastGame).TotalSeconds < _config.DebugTime).Count();
+                var countLeader = _users.Count;
+                var countTotal = UserNumber;
+                Logger.Log($"DEBUG user statistics:\nRegistred: {_newUsers}\n{(_config.DebugTime / 60f).ToString("f0")} Min play: {count10min}\nLeaderboard: {countLeader}\nTotal: {countTotal}");
+                _newUsers = 0;
+            }
+            catch (Exception)
+            { }
         }
 
         //Server
@@ -72,8 +80,19 @@ namespace MasterServer
                 return new RespStatus();
 
             var moneyEarn = user.UpdateUser(status);
-            if (!_users.ContainsKey(user.UserId))
-                _users.Add(user.UserId, user);
+
+            await _modifiUsers.WaitAsync();
+            try
+            {
+                if (!_users.ContainsKey(user.UserId))
+                    _users.Add(user.UserId, user);
+            }
+            catch (Exception e)
+            { throw e; }
+            finally
+            { _modifiUsers.Release(); }
+
+            
             await UpdateUsers();
 
             return new RespStatus() { Rating = user.WorldPlace, UserId = user.UserId, GoldEarned = moneyEarn };
@@ -251,19 +270,26 @@ namespace MasterServer
         private async Task UpdateUsers()
         {
             List<long> toRemove = new List<long>();
-            foreach (var (userId, user) in _users)
-                if ((DateTime.Now - user.LastGame).TotalSeconds > _config.LeaderboardTime)
-                {
-                    await SaveUser(user);
-                    toRemove.Add(userId);
-                }
-            foreach (var userId in toRemove)
-                _users.Remove(userId);
-
-            _sortedUsers = _users.OrderByDescending((user) => user.Value.Rating);
-            int place = 0;
-            foreach (var (userId, user) in _sortedUsers)
-                user.WorldPlace = ++place;
+            await _modifiUsers.WaitAsync();
+            try
+            {
+                foreach (var (userId, user) in _users)
+                    if ((DateTime.Now - user.LastGame).TotalSeconds > _config.LeaderboardTime)
+                    {
+                        await SaveUser(user);
+                        toRemove.Add(userId);
+                    }
+                foreach (var userId in toRemove)
+                    _users.Remove(userId);
+                _sortedUsers = _users.OrderByDescending((user) => user.Value.Rating);
+                int place = 0;
+                foreach (var (userId, user) in _sortedUsers)
+                    user.WorldPlace = ++place;
+            }
+            catch (Exception e)
+            { throw e; }
+            finally
+            { _modifiUsers.Release(); }
         }
 
         private async Task<bool> SaveUser(User user)
@@ -339,8 +365,17 @@ namespace MasterServer
         {
             Logger.Log("BASE saving");
             int saved = 0;
-            foreach (var (userId, user) in _users)
-                saved += await SaveUser(user) ? 1 : 0;
+            await _modifiUsers.WaitAsync();
+            try
+            {
+                foreach (var (userId, user) in _users)
+                    saved += await SaveUser(user) ? 1 : 0;
+            }
+            catch (Exception e)
+            { throw e; }
+            finally
+            { _modifiUsers.Release(); }
+            
             Logger.Log($"BASE saving done: {saved}/{_users.Count}");
         }
         public void Dispose() =>

@@ -7,7 +7,7 @@ namespace NecroServer
     {
         public int Port { get; set; } = 15364;
 
-        public int GameMode { get; set; } = (int)Game.GameMode.Free;
+        public int GameMode { get; set; } = (int)Game.GameMode.Royale;
 
         public int MaxUnitCount { get; set; } = 8;
         public int MaxPlayers { get; set; } = 30;
