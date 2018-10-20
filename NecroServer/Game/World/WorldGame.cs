@@ -131,7 +131,7 @@ namespace Game
             if (_alivePlayers == 0)
                 OnGameEnd?.Invoke();
 
-            //Zone processing
+            //Mode processing
             switch (_gameMode)
             {
                 case GameMode.Royale: //Royale mode - process zone
@@ -166,6 +166,14 @@ namespace Game
                     break;
                 case GameMode.Free: //Free mode - no zone
                     _timeToEnd = 0;
+                    //Add runes if empty
+                    if (_runes.Count == 0)
+                    {
+                        Logger.Log("WORLD creating runes");
+                        _runes.AddRange(GenerateRunes(_config.RuneCount));
+                        Logger.Log("WORLD creating rune tree");
+                        _runesTree = new OcTree(_worldZone, _runes, true);
+                    }
                     break;
             }
         }
