@@ -79,7 +79,7 @@ namespace MasterServer
                 var onlinePlayers = allServers[mode].Select((s) => s.ConnectedPlayers).Sum();
                 var maxPlayers = allServers[mode].Select((s) => s.TotalPlayers).Sum();
                 var playServers = allServers[mode].Where((s) => !s.InLobby).Count();
-                sb.AppendLine($"[{mode}] players {onlinePlayers}/{maxPlayers}\tservers {playServers}/{allServers.Count()}");
+                sb.AppendLine($"[{mode}] players {onlinePlayers}/{maxPlayers}\tservers {playServers}/{allServers[mode].Count()}");
             }
             Logger.Log(sb.ToString());
         }
