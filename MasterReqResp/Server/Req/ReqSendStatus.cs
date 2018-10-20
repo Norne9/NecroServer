@@ -13,5 +13,6 @@ namespace MasterReqResp
         public float DamageReceive { get; set; } = 0f;
         public int UnitRise { get; set; } = 0;
         public int UnitKill { get; set; } = 0;
+        public int GameMode { get; set; }
     }
 }

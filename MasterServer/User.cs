@@ -10,7 +10,6 @@ namespace MasterServer
     public class User
     {
         public const int RatingGameCount = 64;
-        public const int LastPlace = 30;
 
         public long UserId { get; set; } = 0;
         public string UserKey { get; set; } = "";
@@ -45,8 +44,11 @@ namespace MasterServer
 
         public DateTime LastAdWatch { get; set; } = DateTime.Now.AddYears(-1);
 
-        public User(byte[] data)
+        private Config _config;
+
+        public User(byte[] data, Config config)
         {
+            _config = config;
             using (var ms = new MemoryStream(data))
             using (var br = new BinaryReader(ms))
             {
@@ -60,6 +62,8 @@ namespace MasterServer
                 int count = br.ReadInt32();
                 for (int i = 0; i < count; i++)
                     GamePlaces.Enqueue(br.ReadInt32());
+                while (GamePlaces.Count < RatingGameCount)
+                    GamePlaces.Enqueue(_config.LastPlace);
 
                 WinCount = br.ReadInt32();
                 GameCount = br.ReadInt32();
@@ -191,31 +195,39 @@ namespace MasterServer
         public int UpdateUser(ReqSendStatus status)
         {
             LastGame = DateTime.Now;
-            if (status.Place == 1)
-                WinCount++;
 
-            TotalAliveTime += status.AliveTime;
-            TotalDamageDeal += status.DamageDeal;
-            TotalDamageReceive += status.DamageReceive;
-            TotalUnitKill += status.UnitKill;
-            TotalUnitRise += status.UnitRise;
+            double moneyEarn = 0;
+            if (status.GameMode == 0)
+            {
+                if (status.Place == 1)
+                    WinCount++;
+                TotalAliveTime += status.AliveTime;
+                TotalDamageDeal += status.DamageDeal;
+                TotalDamageReceive += status.DamageReceive;
+                TotalUnitKill += status.UnitKill;
+                TotalUnitRise += status.UnitRise;
+                GamePlaces.Enqueue(status.Place);
+                AvgPlace = GamePlaces.Average();
+                AvgAliveTime = (AvgAliveTime * GameCount + status.AliveTime) / (GameCount + 1);
+                AvgDamageDeal = (AvgDamageDeal * GameCount + status.DamageDeal) / (GameCount + 1);
+                AvgDamageReceive = (AvgDamageReceive * GameCount + status.DamageReceive) / (GameCount + 1);
+                AvgUnitKill = (AvgUnitKill * GameCount + status.UnitKill) / (GameCount + 1);
+                AvgUnitRise = (AvgUnitRise * GameCount + status.UnitRise) / (GameCount + 1);
+                GameCount++;
 
-            GamePlaces.Enqueue(status.Place);
-            while (GamePlaces.Count < RatingGameCount)
-                GamePlaces.Enqueue(LastPlace);
-            while (GamePlaces.Count > RatingGameCount)
-                GamePlaces.Dequeue();
+                while (GamePlaces.Count < RatingGameCount)
+                    GamePlaces.Enqueue(_config.LastPlace);
+                while (GamePlaces.Count > RatingGameCount)
+                    GamePlaces.Dequeue();
 
-            AvgPlace = GamePlaces.Average();
-            AvgAliveTime = (AvgAliveTime * GameCount + status.AliveTime) / (GameCount + 1);
-            AvgDamageDeal = (AvgDamageDeal * GameCount + status.DamageDeal) / (GameCount + 1);
-            AvgDamageReceive = (AvgDamageReceive * GameCount + status.DamageReceive) / (GameCount + 1);
-            AvgUnitKill = (AvgUnitKill * GameCount + status.UnitKill) / (GameCount + 1);
-            AvgUnitRise = (AvgUnitRise * GameCount + status.UnitRise) / (GameCount + 1);
+                moneyEarn = Math.Max(0, GetScore(status.Place));
+            }
+            else
+            {
+                moneyEarn = status.UnitKill * _config.MoneyForKill;
+            }
 
-            GameCount++;
             Rating = GamePlaces.Select((p) => GetScore(p)).Sum();
-            double moneyEarn = Math.Max(0, GetScore(status.Place));
             Money += moneyEarn;
             return (int)moneyEarn;
         }

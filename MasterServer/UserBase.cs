@@ -12,20 +12,20 @@ namespace MasterServer
     {
         public long UserNumber = 0;
 
-        private Dictionary<long, User> Users = new Dictionary<long, User>();
-        private IOrderedEnumerable<KeyValuePair<long, User>> SortedUsers = null;
-        private Config Config;
-        private MasterData MasterData;
-        private int NewUsers = 0;
+        private Dictionary<long, User> _users = new Dictionary<long, User>();
+        private IOrderedEnumerable<KeyValuePair<long, User>> _sortedUsers = null;
+        private Config _config;
+        private MasterData _masterData;
+        private int _newUsers = 0;
 
         public UserBase(Config config, MasterData masterData)
         {
-            MasterData = masterData;
-            Config = config;
+            _masterData = masterData;
+            _config = config;
             try
             {
                 Logger.Log("BASE loading");
-                var files = Directory.GetFiles(Config.UserBasePath, $"*{Config.UserBaseExt}", SearchOption.AllDirectories);
+                var files = Directory.GetFiles(_config.UserBasePath, $"*{_config.UserBaseExt}", SearchOption.AllDirectories);
                 Logger.Log($"BASE found {files.Length} records");
                 int loaded = 0, errors = 0;
                 foreach (var fileName in files)
@@ -33,11 +33,11 @@ namespace MasterServer
                     try
                     {
                         var data = File.ReadAllBytes(fileName);
-                        var user = new User(data);
+                        var user = new User(data, _config);
                         if (user.UserId > UserNumber) UserNumber = user.UserId;
-                        if ((DateTime.Now - user.LastGame).TotalSeconds < Config.LeaderboardTime)
+                        if ((DateTime.Now - user.LastGame).TotalSeconds < _config.LeaderboardTime)
                         {
-                            Users.Add(user.UserId, user);
+                            _users.Add(user.UserId, user);
                             loaded++;
                         }
                     }
@@ -57,11 +57,11 @@ namespace MasterServer
 
         public void DebugUsers()
         {
-            var count10min = Users.Values.Where((u) => (DateTime.Now - u.LastGame).TotalMinutes < 10).Count();
-            var countLeader = Users.Count;
+            var count10min = _users.Values.Where((u) => (DateTime.Now - u.LastGame).TotalSeconds < _config.DebugTime).Count();
+            var countLeader = _users.Count;
             var countTotal = UserNumber;
-            Logger.Log($"DEBUG user statistics:\nRegistred: {NewUsers}\n10 Min play: {count10min}\nLeaderboard: {countLeader}\nTotal: {countTotal}");
-            NewUsers = 0;
+            Logger.Log($"DEBUG user statistics:\nRegistred: {_newUsers}\n{(_config.DebugTime / 60f).ToString("f0")} Min play: {count10min}\nLeaderboard: {countLeader}\nTotal: {countTotal}");
+            _newUsers = 0;
         }
 
         //Server
@@ -72,8 +72,8 @@ namespace MasterServer
                 return new RespStatus();
 
             var moneyEarn = user.UpdateUser(status);
-            if (!Users.ContainsKey(user.UserId))
-                Users.Add(user.UserId, user);
+            if (!_users.ContainsKey(user.UserId))
+                _users.Add(user.UserId, user);
             await UpdateUsers();
 
             return new RespStatus() { Rating = user.WorldPlace, UserId = user.UserId, GoldEarned = moneyEarn };
@@ -107,11 +107,11 @@ namespace MasterServer
         public async Task<RespRegister> RegisterUser(ReqRegister reqRegister)
         {
             string name = reqRegister.UserName;
-            if (name.Length > Config.MaxNameLenght)
-                name = name.Substring(0, Config.MaxNameLenght);
+            if (name.Length > _config.MaxNameLenght)
+                name = name.Substring(0, _config.MaxNameLenght);
 
             var user = new User(this, name);
-            await SaveUser(user); NewUsers++;
+            await SaveUser(user); _newUsers++;
 
             return new RespRegister()
             {
@@ -148,9 +148,9 @@ namespace MasterServer
         }
         public async Task<RespLeaderboard> GetLeaderboard(ReqLeaderboard reqLeaderboard)
         {
-            if (SortedUsers == null)
+            if (_sortedUsers == null)
                 await UpdateUsers();
-            var scores = SortedUsers
+            var scores = _sortedUsers
                 .Skip(reqLeaderboard.Page * reqLeaderboard.Count).Take(reqLeaderboard.Count)
                 .Select((u) => new Score() { Name = u.Value.UserName, Place = u.Value.WorldPlace, WinCount = u.Value.WinCount, UserId = u.Value.UserId })
                 .ToList();
@@ -162,59 +162,59 @@ namespace MasterServer
             if (user != null)
             {
                 user.DoubleUnits = doubleUnits;
-                if (!Users.ContainsKey(userId)) await SaveUser(user);
+                if (!_users.ContainsKey(userId)) await SaveUser(user);
             }
         }
         public async Task<RespSkinInfo> GetSkinInfo(ReqSkinInfo reqSkinInfo)
         {
             var user = await GetUser(reqSkinInfo.UserId);
             if (user == null) return new RespSkinInfo();
-            var skin = MasterData.GetSkin(reqSkinInfo.SkinId);
-            var timeToAd = (float)Math.Max(0, Config.WatchAdTime - (DateTime.Now - user.LastAdWatch).TotalSeconds);
+            var skin = _masterData.GetSkin(reqSkinInfo.SkinId);
+            var timeToAd = (float)Math.Max(0, _config.WatchAdTime - (DateTime.Now - user.LastAdWatch).TotalSeconds);
             switch (reqSkinInfo.Command)
             {
                 case ReqSkinCommand.Get:
                     return new RespSkinInfo()
                     {
-                        Skins = user.GetSkinInfo(MasterData.GetSkins()),
+                        Skins = user.GetSkinInfo(_masterData.GetSkins()),
                         Money = (int)Math.Floor(user.Money),
                         WaitAdTime = timeToAd,
-                        AdMoney = (int)Config.MoneyForAd,
+                        AdMoney = (int)_config.MoneyForAd,
                     };
                 case ReqSkinCommand.Select:
-                    user.SelectSkin(skin, MasterData.GetSkins());
-                    if (!Users.ContainsKey(user.UserId)) await SaveUser(user);
+                    user.SelectSkin(skin, _masterData.GetSkins());
+                    if (!_users.ContainsKey(user.UserId)) await SaveUser(user);
                     return new RespSkinInfo()
                     {
-                        Skins = user.GetSkinInfo(MasterData.GetSkins()),
+                        Skins = user.GetSkinInfo(_masterData.GetSkins()),
                         Money = (int)Math.Floor(user.Money),
                         WaitAdTime = timeToAd,
-                        AdMoney = (int)Config.MoneyForAd,
+                        AdMoney = (int)_config.MoneyForAd,
                     };
                 case ReqSkinCommand.Buy:
                     user.BuySkin(skin);
-                    if (!Users.ContainsKey(user.UserId)) await SaveUser(user);
+                    if (!_users.ContainsKey(user.UserId)) await SaveUser(user);
                     return new RespSkinInfo()
                     {
-                        Skins = user.GetSkinInfo(MasterData.GetSkins()),
+                        Skins = user.GetSkinInfo(_masterData.GetSkins()),
                         Money = (int)Math.Floor(user.Money),
                         WaitAdTime = timeToAd,
-                        AdMoney = (int)Config.MoneyForAd,
+                        AdMoney = (int)_config.MoneyForAd,
                     };
                 case ReqSkinCommand.WatchAd:
                     if (timeToAd <= 0)
                     {
-                        user.Money += Config.MoneyForAd;
+                        user.Money += _config.MoneyForAd;
                         user.LastAdWatch = DateTime.Now;
-                        timeToAd = Config.WatchAdTime;
-                        if (!Users.ContainsKey(user.UserId)) await SaveUser(user);
+                        timeToAd = _config.WatchAdTime;
+                        if (!_users.ContainsKey(user.UserId)) await SaveUser(user);
                     }
                     return new RespSkinInfo()
                     {
-                        Skins = user.GetSkinInfo(MasterData.GetSkins()),
+                        Skins = user.GetSkinInfo(_masterData.GetSkins()),
                         Money = (int)Math.Floor(user.Money),
                         WaitAdTime = timeToAd,
-                        AdMoney = (int)Config.MoneyForAd,
+                        AdMoney = (int)_config.MoneyForAd,
                     };
                 default:
                     return new RespSkinInfo();
@@ -251,18 +251,18 @@ namespace MasterServer
         private async Task UpdateUsers()
         {
             List<long> toRemove = new List<long>();
-            foreach (var (userId, user) in Users)
-                if ((DateTime.Now - user.LastGame).TotalSeconds > Config.LeaderboardTime)
+            foreach (var (userId, user) in _users)
+                if ((DateTime.Now - user.LastGame).TotalSeconds > _config.LeaderboardTime)
                 {
                     await SaveUser(user);
                     toRemove.Add(userId);
                 }
             foreach (var userId in toRemove)
-                Users.Remove(userId);
+                _users.Remove(userId);
 
-            SortedUsers = Users.OrderByDescending((user) => user.Value.Rating);
+            _sortedUsers = _users.OrderByDescending((user) => user.Value.Rating);
             int place = 0;
-            foreach (var (userId, user) in SortedUsers)
+            foreach (var (userId, user) in _sortedUsers)
                 user.WorldPlace = ++place;
         }
 
@@ -270,7 +270,7 @@ namespace MasterServer
         {
             var dir = GetUserDir(user.UserId);
             var path = GetUserPath(user.UserId);
-            for (int i = 0; i < Config.MaxFileError; i++)
+            for (int i = 0; i < _config.MaxFileError; i++)
             {
                 try
                 {
@@ -285,18 +285,18 @@ namespace MasterServer
                 }
                 catch (Exception e)
                 {
-                    if (i == Config.MaxFileError - 1)
+                    if (i == _config.MaxFileError - 1)
                         Logger.Log($"BASE file '{path}' save error:\n{e.ToString()}", true);
                     else
-                        await Task.Delay(Config.WaitFileError);
+                        await Task.Delay(_config.WaitFileError);
                 }
             }
             return false;
         }
         private async Task<User> GetUser(long userId)
         {
-            if (Users.ContainsKey(userId))
-                return Users[userId];
+            if (_users.ContainsKey(userId))
+                return _users[userId];
             else
             {
                 var path = GetUserPath(userId);
@@ -305,19 +305,19 @@ namespace MasterServer
                     Logger.Log($"BASE file '{path}' not found", true);
                     return null;
                 }
-                for (int i = 0; i < Config.MaxFileError; i++)
+                for (int i = 0; i < _config.MaxFileError; i++)
                 {
                     try
                     {
                         var data = await File.ReadAllBytesAsync(path);
-                        return new User(data);
+                        return new User(data, _config);
                     }
                     catch (Exception e)
                     {
-                        if (i == Config.MaxFileError - 1)
+                        if (i == _config.MaxFileError - 1)
                             Logger.Log($"BASE file '{path}' read error:\n{e.ToString()}", true);
                         else
-                            await Task.Delay(Config.WaitFileError);
+                            await Task.Delay(_config.WaitFileError);
                     }
                 }
             }
@@ -327,21 +327,21 @@ namespace MasterServer
         private string GetUserDir(long userId)
         {
             var bytes = BitConverter.GetBytes(userId);
-            return Path.Combine(Config.UserBasePath, bytes[0].ToString("X"), bytes[1].ToString("X"));
+            return Path.Combine(_config.UserBasePath, bytes[0].ToString("X"), bytes[1].ToString("X"));
         }
         private string GetUserPath(long userId)
         {
             var bytes = BitConverter.GetBytes(userId);
-            return Path.Combine(Config.UserBasePath, bytes[0].ToString("X"), bytes[1].ToString("X"), userId.ToString("X") + Config.UserBaseExt);
+            return Path.Combine(_config.UserBasePath, bytes[0].ToString("X"), bytes[1].ToString("X"), userId.ToString("X") + _config.UserBaseExt);
         }
 
         public async Task Save()
         {
             Logger.Log("BASE saving");
             int saved = 0;
-            foreach (var (userId, user) in Users)
+            foreach (var (userId, user) in _users)
                 saved += await SaveUser(user) ? 1 : 0;
-            Logger.Log($"BASE saving done: {saved}/{Users.Count}");
+            Logger.Log($"BASE saving done: {saved}/{_users.Count}");
         }
         public void Dispose() =>
             Save().Wait();

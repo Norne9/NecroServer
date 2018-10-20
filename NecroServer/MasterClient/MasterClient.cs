@@ -77,7 +77,7 @@ namespace NecroServer
             }
         }
 
-        public async Task<RespStatus> SendStatus(PlayerStatus status, long userId)
+        public async Task<RespStatus> SendStatus(PlayerStatus status, long userId, GameMode mode)
         {
             try
             {
@@ -90,6 +90,7 @@ namespace NecroServer
                     Place = status.Place,
                     UnitKill = status.UnitKill,
                     UnitRise = status.UnitRise,
+                    GameMode = (int)mode,
                 });
                 var result = await _httpClient.PostAsync(_config.MasterServer + "sendstatus", new StringContent(json, Encoding.UTF8, "application/json"));
                 var data = await result.Content.ReadAsStringAsync();

@@ -172,7 +172,7 @@ namespace NecroServer
                 var stat = status;
                 var id = userId;
 
-                var result = await _masterClient.SendStatus(stat, id);
+                var result = await _masterClient.SendStatus(stat, id, _gameMode);
                 if (result.UserId != id)
                     Logger.Log($"MASTER failed send player #{id} status");
                 status.Rating = result.Rating;
