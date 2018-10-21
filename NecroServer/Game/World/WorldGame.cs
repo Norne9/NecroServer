@@ -94,8 +94,10 @@ namespace Game
             var nPlayer = AI.GetNeutrallPlayer(_config);
             _players.Add(nPlayer.NetworkId, nPlayer);
             foreach (var unit in _units)
-                if (unit is UnitBear)
-                    unit.Rise(nPlayer);
+            {
+                if (unit is UnitBear)  unit.Rise(nPlayer);
+                if (unit is UnitWitch) unit.Rise(nPlayer);
+            }   
         }
 
         public void Update(float deltaTime)

@@ -123,7 +123,10 @@ namespace Game
                     }
                 }
                 else
-                    world.MoveUnit(this, CalcNewPos(Position, CurrentStats.MoveSpeed / 20f, world.DeltaTime)); //stay
+                {
+                    CurrentStats = new UnitStats(CurrentStats) { MoveSpeed = 0.1f };
+                    world.MoveUnit(this, CalcNewPos(Position, CurrentStats.MoveSpeed, world.DeltaTime)); //stay
+                }
             }
             else //Just move
             {

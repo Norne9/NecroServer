@@ -250,8 +250,8 @@ namespace NecroServer
                 }
 
                 //Wait
-                int waitTime = Math.Max(0, _config.UpdateDelay - (int)Math.Ceiling(deltaTime * 1000f));
-                if (waitTime > 1) await Task.Delay(waitTime);
+                int waitTime = Math.Max(5, _config.UpdateDelay - (int)Math.Ceiling(deltaTime * 1000f));
+                await Task.Delay(waitTime);
 
 #if DEBUG
                 //Console commands

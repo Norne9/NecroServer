@@ -54,12 +54,19 @@ namespace Game
                 .Where((u) => u.Owner != null && u.Owner != player);
             var neutralUnits = world.OverlapUnits(player.AvgPosition, config.RiseRadius).Where((u) => u.Owner == null);
 
-            bool fight = ((player.Units.Count >= enemyUnits.Count() - 2) && enemyUnits.Any()) || enemyUnits.Where((u)=> !u.Owner.IsAI).Any();
+            bool fight = false;
+            if (config.GameMode != (int)GameMode.Royale)
+                fight = ((player.Units.Count > enemyUnits.Count()) && enemyUnits.Any()) || enemyUnits.Where((u) => !u.Owner.IsAI).Any();
+            else
+                fight = ((player.Units.Count >= enemyUnits.Count() - 2) && enemyUnits.Any()) || enemyUnits.Where((u) => !u.Owner.IsAI).Any();
+
             bool rise = neutralUnits.Count() > 0;
             bool goCenter = !fight && player.AvgPosition.SqrLength() * 1.3f > world.ZoneRadius * world.ZoneRadius;
 
             var rndDir = RandomPosition.GetRandomPosition(byte.MaxValue + player.NetworkId);
-            Vector2 inputDir = (nearUnits.Where((u) => u.Owner == null).FirstOrDefault()?.Position ?? rndDir) - player.AvgPosition;
+            Vector2 inputDir = rndDir;
+            if (config.GameMode == (int)GameMode.Royale)
+                inputDir = (nearUnits.Where((u) => u.Owner == null).FirstOrDefault()?.Position ?? rndDir) - player.AvgPosition;
             if (player.GetCooldown() > 0f) inputDir = rndDir;
             if (enemyUnits.Any())
             {

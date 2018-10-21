@@ -13,6 +13,7 @@ namespace Game
         public const byte MeshOrk = 1;
         public const byte MeshBear = 2;
         public const byte MeshZombie = 3;
+        public const byte MeshWitch = 4;
 
         private ushort _currentUnitId;
         private readonly List<ConstructorInfo> _unitProtos;
@@ -29,6 +30,7 @@ namespace Game
             var ork = typeof(UnitOrk).GetConstructor(constructorTypes);
             var bear = typeof(UnitBear).GetConstructor(constructorTypes);
             var zombie = typeof(UnitZombie).GetConstructor(constructorTypes);
+            var witch = typeof(UnitWitch).GetConstructor(constructorTypes);
 
             _unitProtos = new List<ConstructorInfo>();
             void AddByChance(ConstructorInfo unitType, int chance)
@@ -37,10 +39,11 @@ namespace Game
                     _unitProtos.Add(unitType);
             }
 
-            AddByChance(troll, 4);
-            AddByChance(zombie, 3);
-            AddByChance(ork, 2);
-            AddByChance(bear, 1);
+            AddByChance(troll, 10);
+            AddByChance(zombie, 9);
+            AddByChance(ork, 5);
+            AddByChance(bear, 2);
+            AddByChance(witch, 1);
         }
 
         public Unit MakeUnit() =>
