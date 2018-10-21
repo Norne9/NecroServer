@@ -21,10 +21,10 @@ namespace NecroServer
 
             var server = new Server(config, masterClient);
 
-            //try
+            try
             { await server.Run(); }
-            //catch (Exception e)
-            //{ Logger.Log($"SERVER ERROR: {e.ToString()}", true); }
+            catch (Exception e)
+            { Logger.Log($"SERVER ERROR: {e.ToString()}", true); }
 
             await Task.Delay(3000);
             Logger.Stop();
