@@ -43,7 +43,7 @@ namespace NecroServer
 
             _server = new NetManager(this, 100 + _config.MaxPlayers, _config.ConnectionKey)
             {
-                UpdateTime = 10,
+                UpdateTime = _config.UpdateDelay / 2,
             };
 
             Logger.Log($"SERVER register packets");
@@ -200,7 +200,13 @@ namespace NecroServer
                 _dtTimer.Restart();
 
                 //update network
-                _server.PollEvents();
+                try
+                { _server.PollEvents(); }
+                catch (Exception e)
+                {
+                    Logger.Log($"SERVER internal error: {e.ToString()}", true);
+                }
+                
 
                 //countdown to start
                 if (_serverState == ServerState.WaitingPlayers)
@@ -222,7 +228,7 @@ namespace NecroServer
                             if (player.IsAlive) //Send world frame
                             {
                                 var packet = _netSerializer.Serialize(_world.GetServerFrame(player));
-                                _peers[netId].Send(packet, SendOptions.Sequenced);
+                                _peers[netId].Send(packet, SendOptions.Unreliable);
                             }
                             else //Send end packet
                             {
@@ -250,7 +256,7 @@ namespace NecroServer
                 }
 
                 //Wait
-                int waitTime = Math.Max(5, _config.UpdateDelay - (int)Math.Ceiling(deltaTime * 1000f));
+                int waitTime = Math.Min(_config.UpdateDelay, Math.Max(5, _config.UpdateDelay - (int)Math.Ceiling(deltaTime * 1000f)));
                 await Task.Delay(waitTime);
 
 #if DEBUG
@@ -293,9 +299,16 @@ namespace NecroServer
             while (_work)
             {
                 await Task.Delay(_config.MasterUpdateDelay);
-                while (_requestQueue.TryDequeue(out Func<Task> action))
-                    await action();
-                await SendInfoToMaster();
+                try
+                {
+                    while (_requestQueue.TryDequeue(out Func<Task> action))
+                        await action();
+                    await SendInfoToMaster();
+                }
+                catch (Exception e)
+                {
+                    Logger.Log($"MASTER error: {e.ToString()}", true);
+                }
             }
         }
         private async Task SendInfoToMaster()

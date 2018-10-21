@@ -12,7 +12,7 @@ namespace NecroServer
         public int MaxUnitCount { get; set; } = 8;
         public int MaxPlayers { get; set; } = 30;
         public int MaxAiPlayers { get; set; } = 20;
-        public int UpdateDelay { get; set; } = 30;
+        public int UpdateDelay { get; set; } = 40;
 
         public float PlayerWaitTime { get; set; } = 30f;
         public float MinWaitTime { get; set; } = 10f;
