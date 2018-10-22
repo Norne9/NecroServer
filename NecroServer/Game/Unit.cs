@@ -27,7 +27,7 @@ namespace Game
         public bool Upgraded { get; private set; } = false;
         public byte UnitSkin { get; private set; } = 0;
 
-        public int Kills { get; set; } = 0;
+        public float Kills { get; set; } = 0;
 
         private readonly List<Effect> _unitEffects = new List<Effect>();
 
@@ -76,7 +76,7 @@ namespace Game
                 Rot = (byte)((_rotation > 0 ? _rotation : _rotation + GameMath.MathF.PI * 2f) / GameMath.MathF.PI / 2f * byte.MaxValue),
                 VisualEffect = visualEffect,
                 Target = _myTarget?.UnitId ?? UnitId,
-                Exp = (byte)(Kills / (float)CurrentStats.KillsToUpgrade * byte.MaxValue),
+                Exp = (byte)(Kills / CurrentStats.KillsToUpgrade * byte.MaxValue),
                 UnitSkin = UnitSkin,
             };
         }
@@ -250,16 +250,16 @@ namespace Game
                 if (damager == null)
                     Logger.Log($"GAME unit {UnitId}@{Owner?.Name ?? "null"} killed by zone");
                 else
-                {
                     Logger.Log($"GAME unit {damager.UnitId}@{damager.Owner?.Name ?? "null"} killed {UnitId}@{Owner?.Name ?? "null"}");
-                    damager.Kills++;
-                }
                 Owner?.Units.Remove(this);
                 Owner = null;
                 AttackAnimation = false;
 
                 if (damager?.Owner != null)
+                {
                     damager.Owner.PlayerStatus.UnitKill++;
+                    damager.Owner.GotKill();
+                }   
             }
         }
 

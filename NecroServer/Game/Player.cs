@@ -177,6 +177,16 @@ namespace Game
             return result;
         }
 
+        public void GotKill()
+        {
+            if (IsNeutrall) return;
+            var unitsToUpgrade = Units.Where((u) => !u.Upgraded);
+            int count = unitsToUpgrade.Count();
+            if (count == 0) return;
+            var kill = 1f / count;
+            foreach (var unit in unitsToUpgrade)
+                unit.Kills += kill;
+        }
 
         public void UnitAttack()
         {

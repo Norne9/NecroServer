@@ -9,7 +9,7 @@ namespace Game
     {
         private static readonly UnitStats _zombieStats = new UnitStats(UnitStats.GetDefaultStats())
         {
-            MaxHealth = 250f,
+            MaxHealth = 100f,
             AttackDelay = 0.83f,
             Damage = 9f
         };

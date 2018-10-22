@@ -50,7 +50,7 @@ namespace Game
         public static Effect Neutrall()
         {
             var neutrallStats = UnitStats.GetDefaultEffect();
-            neutrallStats.ViewRadius = 3f;
+            neutrallStats.ViewRadius = 1.5f;
             neutrallStats.TakeDamageMultiplier = 0.33f;
             neutrallStats.Damage = 1f;
             neutrallStats.MoveSpeed = 0.5f;
