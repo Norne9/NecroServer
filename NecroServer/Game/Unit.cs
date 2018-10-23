@@ -96,7 +96,7 @@ namespace Game
                 if (_myTarget != null) lookDirection = (_myTarget.Position - Position); //Look at enemy
                 AttackAnimation = _myTarget != null; //Play attack animation
 
-                //We cant do anithing if we attack
+                //We can attack
                 if ((DateTime.Now - _lastAttack).TotalSeconds > CurrentStats.AttackDelay)
                 {
                     if (_myTarget != null) //We have target
@@ -122,8 +122,9 @@ namespace Game
                         world.MoveUnit(this, tPos);
                     }
                 }
-                else
+                else //We cant attack
                 {
+                    AttackAnimation = true;
                     CurrentStats = new UnitStats(CurrentStats) { MoveSpeed = 0.1f };
                     world.MoveUnit(this, CalcNewPos(Position, CurrentStats.MoveSpeed, world.DeltaTime)); //stay
                 }
@@ -150,7 +151,7 @@ namespace Game
             _rotation = System.MathF.Atan2(lookDirection.X, lookDirection.Y);
 
             //Apply health change
-            if (CurrentStats.HealthPerSecond != 0)
+            if (CurrentStats.HealthPerSecond != 0 && !AttackAnimation)
                 TakeDamage(this, -CurrentStats.HealthPerSecond * world.DeltaTime);
         }
 

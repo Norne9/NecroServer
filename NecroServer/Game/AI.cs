@@ -35,7 +35,7 @@ namespace Game
         {
             var id = _aiUserId--;
             var name = _aiNames[(Math.Abs(id) + _nameOffset) % _aiNames.Length];
-            return new Player(id, id, name, false, config);
+            return new Player(id, id, name, true, config);
         }
 
         public static Player GetNeutrallPlayer(Config config)

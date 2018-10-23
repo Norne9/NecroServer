@@ -62,10 +62,11 @@ namespace NecroServer
 
         private async void OnClientConnection(ClientConnection clientConnection, NetPeer peer)
         {
+            GC.Collect();
             //check game state
             if (_gameMode == GameMode.Royale && (_serverState == ServerState.Playing || _serverState == ServerState.EndGame))
             {
-                Logger.Log($"SERVER connection attempt during game: {clientConnection.UserId}", true);
+                Logger.Log($"SERVER connection attempt during game: {clientConnection.UserId}");
                 _server.DisconnectPeer(peer);
                 return;
             }
@@ -358,6 +359,8 @@ namespace NecroServer
 
             if (_peers.Count == 0)
                 Stop("no players");
+
+            GC.Collect();
         }
 
 

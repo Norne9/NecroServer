@@ -76,10 +76,9 @@ namespace Game
         public static UnitStats GetUpgradeStats()
         {
             var upgradeStats = GetDefaultEffect();
-            upgradeStats.TakeDamageMultiplier = 0.66f;
-            upgradeStats.Damage = 1.5f;
-            upgradeStats.MoveSpeed = 1.33f;
-            upgradeStats.HealthPerSecond = 5f;
+            upgradeStats.TakeDamageMultiplier = 0.5f;
+            upgradeStats.Damage = 1.2f;
+            upgradeStats.HealthPerSecond = 8f;
             return upgradeStats;
         }
 
