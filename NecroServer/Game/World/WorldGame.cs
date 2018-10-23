@@ -110,14 +110,18 @@ namespace Game
             _unitsTree = new OcTree(_worldZone, _units, true);
 
             //Get alive players count
-            _alivePlayers = _players.Values.Where((p) => p.IsAlive && !p.IsNeutrall).Count();
-
-            //Kill all units if we have winner
-            if (_alivePlayers == 1)
+            if (_gameMode == GameMode.Royale)
             {
-                foreach (var unit in _units)
-                    unit.TakeDamage(null, float.MaxValue);
+                _alivePlayers = _players.Values.Where((p) => p.IsAlive && !p.IsNeutrall).Count();
+                //Kill all units if we have winner
+                if (_alivePlayers == 1)
+                {
+                    foreach (var unit in _units)
+                        unit.TakeDamage(null, float.MaxValue);
+                }
             }
+            else
+                _alivePlayers = _players.Values.Where((p) => p.IsAlive && !p.IsAI).Count();
 
             //Update players
             foreach (var player in _players.Values)
