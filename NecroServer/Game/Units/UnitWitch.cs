@@ -9,7 +9,7 @@ namespace Game
     {
         private static readonly UnitStats _witchStats = new UnitStats(UnitStats.GetDefaultStats())
         {
-            MaxHealth = 200f,
+            MaxHealth = 150f,
             AttackDelay = 1.5f,
             Damage = 40f,
             AttackRange = 3.5f,

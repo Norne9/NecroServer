@@ -99,7 +99,7 @@ namespace Game
 
                 if (hasRise) //Rise
                 {
-                    unitsRise = unitsRise.OrderBy((u) => (AvgPosition - u.Position).SqrLength());
+                    unitsRise = unitsRise.OrderByDescending((u) => u.CurrentStats.Damage / u.CurrentStats.AttackDelay);
                     foreach (var unit in unitsRise)
                         unit.Rise(this);
                 }
@@ -180,11 +180,10 @@ namespace Game
         public void GotKill()
         {
             if (IsNeutrall) return;
-            var unitsToUpgrade = Units.Where((u) => !u.Upgraded);
-            int count = unitsToUpgrade.Count();
+            var count = Units.Select((u) => u.Upgraded ? 0.7f : 1f).DefaultIfEmpty(0).Sum();
             if (count == 0) return;
             var kill = 1f / count;
-            foreach (var unit in unitsToUpgrade)
+            foreach (var unit in Units)
                 unit.Kills += kill;
         }
 

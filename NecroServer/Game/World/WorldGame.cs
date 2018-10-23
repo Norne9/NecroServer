@@ -44,6 +44,8 @@ namespace Game
 
             var unit = RandomUnit();
             unit.Rise(player);
+            if (randomPlace)
+                unit.Position = GetPointInCircle(ZoneRadius);
             if (player.DoubleUnits)
             {
                 for (int i = 0; i < _config.AdditionalUnitCount; i++)
