@@ -105,7 +105,7 @@ namespace NecroServer
 
         public async Task<RespUnits> RequestUnits()
         {
-            var data = await _httpClient.GetStringAsync(_config.MasterServer + "config");
+            var data = await _httpClient.GetStringAsync(_config.MasterServer + "units");
             return JsonConvert.DeserializeObject<RespUnits>(data);
         }
     }

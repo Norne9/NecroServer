@@ -49,10 +49,10 @@ namespace NecroServer
 
         public float ZoneDps { get; set; } = 14f;
 
-        public float InputDeadzone { get; set; } = 0.001f;
+        public float InputDeadzone { get; set; } = 0.1f;
 
-        public float StaticTime { get; set; } = 90f;
-        public float ResizeTime { get; set; } = 90f;
+        public float StaticTime { get; set; } = 120f;
+        public float ResizeTime { get; set; } = 120f;
 
         public Config(string[] args)
         {

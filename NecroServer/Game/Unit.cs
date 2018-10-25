@@ -128,7 +128,7 @@ namespace Game
                 else //We cant attack
                 {
                     AttackAnimation = true;
-                    CurrentStats = new UnitStats(CurrentStats) { MoveSpeed = 0.1f };
+                    CurrentStats = new UnitStats(CurrentStats) { MoveSpeed = 0.25f };
                     world.MoveUnit(this, CalcNewPos(Position, CurrentStats.MoveSpeed, world.DeltaTime)); //stay
                 }
             }
@@ -293,7 +293,7 @@ namespace Game
         {
             result = Vector2.Empty;
             var poses = new List<Vector2>();
-            pushPower = 0.2f;
+            pushPower = 0.1f;
             foreach (var tree in trees)
             {
                 var objs = tree.Overlap<PhysicalObject>(Position, Radius);
@@ -302,11 +302,11 @@ namespace Game
                     if (!(obj is Unit unit))
                     {
                         poses.Add(obj.Position);
-                        pushPower = pushPower < 0.7f ? 0.7f : pushPower;
+                        pushPower = pushPower < 0.85f ? 0.85f : pushPower;
                         continue;
                     }
                     if (unit.Owner == null || obj == this) continue;
-                    if (unit.Owner != Owner) pushPower = pushPower < 0.98f ? 0.98f : pushPower;
+                    if (unit.Owner != Owner) pushPower = pushPower < 0.6f ? 0.6f : pushPower;
                     poses.Add(unit.Position);
                 }
             }

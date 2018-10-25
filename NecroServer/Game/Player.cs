@@ -117,8 +117,9 @@ namespace Game
                 }
             }
 
-            var attack = _inputMove.SqrLength() < _config.InputDeadzone;
-            CalculatePositions(attack);
+            var attack = _inputMove.SqrLength() < 0.001f;
+            var move = _inputMove.SqrLength() > _config.InputDeadzone;
+            CalculatePositions(move);
 
             //process units
             for (int i = Units.Count - 1; i >= 0; i--)
@@ -134,11 +135,11 @@ namespace Game
             AvgPosition /= Units.Count;
         }
 
-        private void CalculatePositions(bool attack)
+        private void CalculatePositions(bool move)
         {
             //get input for units
             var poses = UnitPosition.GetPositions(Units.Count);
-            var movePoses = ProcessPositions(poses, SmallInput, !attack);
+            var movePoses = ProcessPositions(poses, SmallInput, move);
 
             var sortedUnits = Units.OrderBy((u) => u.BestDist);
             foreach (var unit in sortedUnits)
