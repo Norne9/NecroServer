@@ -10,14 +10,15 @@ namespace MasterServer
 {
     public class MasterData
     {
-        private List<Skin> Skins = new List<Skin>();
-        private List<string> Args = new List<string>();
-        private List<TextMessage> Messages = new List<TextMessage>();
-        private readonly Config Config;
+        private List<Skin> _skins = new List<Skin>();
+        private List<string> _args = new List<string>();
+        private List<TextMessage> _messages = new List<TextMessage>();
+        private List<UnitProto> _units = new List<UnitProto>();
+        private readonly Config _config;
 
         public MasterData(Config config)
         {
-            Config = config;
+            _config = config;
             Reload().Wait();
         }
 
@@ -26,8 +27,8 @@ namespace MasterServer
             Logger.Log($"MDATA loading skins");
             try
             {
-                string data = await File.ReadAllTextAsync(Config.ShopFile);
-                Skins = JsonConvert.DeserializeObject<List<Skin>>(data);
+                string data = await File.ReadAllTextAsync(_config.ShopFile);
+                _skins = JsonConvert.DeserializeObject<List<Skin>>(data);
             }
             catch (Exception e)
             {
@@ -37,8 +38,8 @@ namespace MasterServer
             Logger.Log($"MDATA loading args");
             try
             {
-                string[] lines = await File.ReadAllLinesAsync(Config.ParamsFile);
-                Args = new List<string>(lines);
+                string[] lines = await File.ReadAllLinesAsync(_config.ParamsFile);
+                _args = new List<string>(lines);
             }
             catch (Exception e)
             {
@@ -48,33 +49,47 @@ namespace MasterServer
             Logger.Log($"MDATA loading texts");
             try
             {
-                string data = await File.ReadAllTextAsync(Config.TextsFile);
-                Messages = JsonConvert.DeserializeObject<List<TextMessage>>(data);
+                string data = await File.ReadAllTextAsync(_config.TextsFile);
+                _messages = JsonConvert.DeserializeObject<List<TextMessage>>(data);
             }
             catch (Exception e)
             {
                 Logger.Log($"MDATA failed to load messages: {e.ToString()}", true);
             }
 
+            Logger.Log($"MDATA loading units");
+            try
+            {
+                string data = await File.ReadAllTextAsync(_config.UnitsFile);
+                _units = JsonConvert.DeserializeObject<List<UnitProto>>(data);
+            }
+            catch (Exception e)
+            {
+                Logger.Log($"MDATA failed to load units: {e.ToString()}", true);
+            }
+
             Logger.Log($"MDATA loading finished.");
         }
 
         public RespConfig GetParams() =>
-            new RespConfig() { Args = Args };
+            new RespConfig() { Args = _args };
 
         public List<Skin> GetSkins() =>
-            new List<Skin>(Skins);
+            new List<Skin>(_skins);
 
         public Skin GetSkin(long skinId) =>
-            Skins.Where((s) => s.SkinId == skinId).FirstOrDefault();
+            _skins.Where((s) => s.SkinId == skinId).FirstOrDefault();
+
+        public RespUnits GetUnits() =>
+            new RespUnits() { Units = _units };
 
         public RespMessages GetMessages(ReqMessages req)
         {
             const int DefaultLang = 10;
 
-            var messages = Messages.Where((m) => m.Lang == req.Lang).Select((m) => m.Message).ToList();
+            var messages = _messages.Where((m) => m.Lang == req.Lang).Select((m) => m.Message).ToList();
             if (messages.Count == 0)
-                messages = Messages.Where((m) => m.Lang == DefaultLang).Select((m) => m.Message).ToList();
+                messages = _messages.Where((m) => m.Lang == DefaultLang).Select((m) => m.Message).ToList();
             return new RespMessages() { Messages = messages };
         }
     }

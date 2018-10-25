@@ -5,6 +5,7 @@ using GameMath;
 using NecroServer;
 using System.Linq;
 using Packets;
+using MasterReqResp;
 
 namespace Game
 {
@@ -25,6 +26,7 @@ namespace Game
         public bool AttackAnimation { get; private set; } = false;
 
         public bool Upgraded { get; private set; } = false;
+        public bool SpawnNeutrall { get; }
         public byte UnitSkin { get; private set; } = 0;
 
         public float Kills { get; set; } = 0;
@@ -40,10 +42,11 @@ namespace Game
 
         private readonly Config _config;
 
-        public Unit(Config config, ushort id, byte mesh, UnitStats stats)
+        public Unit(Config config, ushort id, byte mesh, UnitStats stats, bool spawnNeutrall, float radius = 0.5f)
         {
+            SpawnNeutrall = spawnNeutrall;
             _config = config;
-            Radius = 0.5f;
+            Radius = radius;
 
             UnitId = id;
 

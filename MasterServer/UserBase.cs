@@ -171,7 +171,7 @@ namespace MasterServer
                 await UpdateUsers();
             var scores = _sortedUsers
                 .Skip(reqLeaderboard.Page * reqLeaderboard.Count).Take(reqLeaderboard.Count)
-                .Select((u) => new Score() { Name = u.Value.UserName, Place = u.Value.WorldPlace, WinCount = u.Value.WinCount, UserId = u.Value.UserId })
+                .Select((u) => new Score() { Name = u.Value.UserName, Place = u.Value.WorldPlace, WinCount = (int)u.Value.Rating, UserId = u.Value.UserId })
                 .ToList();
             return new RespLeaderboard() { Scores = scores };
         }

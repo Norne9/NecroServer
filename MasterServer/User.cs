@@ -220,7 +220,7 @@ namespace MasterServer
                 while (GamePlaces.Count > RatingGameCount)
                     GamePlaces.Dequeue();
 
-                moneyEarn = Math.Max(0, GetScore(status.Place));
+                moneyEarn = GetMoney(status.Place);
             }
             else
             {
@@ -232,13 +232,21 @@ namespace MasterServer
             return (int)moneyEarn;
         }
 
-        private static double GetScore(int place)
+        private double GetMoney(int place)
         {
             if (place > 5)
-                return -0.2 * place;
-            double score = 10;
+                return 0;
+            double money = 32;
             for (int i = 1; i < place; i++)
-                score /= 2;
+                money /= 2;
+            return money;
+        }
+
+        private double GetScore(int place)
+        {
+            double score = 1;
+            for (int i = 1; i < place; i++)
+                score /= RatingGameCount;
             return score;
         }
     }

@@ -15,8 +15,8 @@ namespace NecroServer
         public int UpdateDelay { get; set; } = 40;
 
         public float PlayerWaitTime { get; set; } = 30f;
-        public float MinWaitTime { get; set; } = 10f;
-        public float EndWaitTime { get; set; } = 15f;
+        public float MinWaitTime { get; set; } = 15f;
+        public float EndWaitTime { get; set; } = 20f;
 
         public string DiscordLog { get; set; } = null;
         public string ConnectionKey { get; set; } = "Release_v0.2";

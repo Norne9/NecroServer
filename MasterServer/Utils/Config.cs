@@ -13,6 +13,7 @@ namespace MasterServer
         public string ParamsFile { get; set; } = "Data/params.txt";
         public string ShopFile { get; set; } = "Data/shop.json";
         public string TextsFile { get; set; } = "Data/text.json";
+        public string UnitsFile { get; set; } = "Data/units.json";
 
         public float LeaderboardTime { get; set; } = 60f * 60f * 24f * 3f;
         public float ServerTime { get; set; } = 3f;

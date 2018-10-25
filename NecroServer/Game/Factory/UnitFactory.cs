@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using MasterReqResp;
 
 namespace Game
 {
@@ -16,7 +17,7 @@ namespace Game
         public const byte MeshWitch = 4;
 
         private ushort _currentUnitId;
-        private readonly List<ConstructorInfo> _unitProtos;
+        private readonly List<UnitProto> _unitProtos;
         private readonly Config _config;
 
         public UnitFactory(Config config)
@@ -24,30 +25,28 @@ namespace Game
             _currentUnitId = 0;
             _config = config;
 
-            var constructorTypes = new Type[] { typeof(Config), typeof(ushort) };
+            var units = new MasterClient(_config).RequestUnits().GetAwaiter().GetResult()?.Units;
+            if (units == null || units.Count == 0)
+                throw new Exception("Empty unit array");
 
-            var troll = typeof(UnitTroll).GetConstructor(constructorTypes);
-            var ork = typeof(UnitOrk).GetConstructor(constructorTypes);
-            var bear = typeof(UnitBear).GetConstructor(constructorTypes);
-            var zombie = typeof(UnitZombie).GetConstructor(constructorTypes);
-            var witch = typeof(UnitWitch).GetConstructor(constructorTypes);
-
-            _unitProtos = new List<ConstructorInfo>();
-            void AddByChance(ConstructorInfo unitType, int chance)
+            _unitProtos = new List<UnitProto>();
+            void AddByChance(UnitProto unitType, int chance)
             {
                 for (int i = 0; i < chance; i++)
                     _unitProtos.Add(unitType);
             }
 
-            AddByChance(troll, 10);
-            AddByChance(zombie, 9);
-            AddByChance(ork, 5);
-            AddByChance(bear, 2);
-            AddByChance(witch, 1);
+            foreach (var unit in units)
+            {
+                Logger.Log($"UNITS loaded '{unit.UnitName}'");
+                AddByChance(unit, unit.UnitRate);
+            }
         }
 
-        public Unit MakeUnit() =>
-            (Unit)_unitProtos[GameMath.MathF.RandomInt(0, _unitProtos.Count)]
-            .Invoke(new object[] { _config, _currentUnitId++ });
+        public Unit MakeUnit()
+        {
+            var proto = _unitProtos[GameMath.MathF.RandomInt(0, _unitProtos.Count)];
+            return new Unit(_config, _currentUnitId++, (byte)proto.UnitMesh, proto.UnitStats, proto.SpawnNeutrall, proto.UnitRadius);
+        }
     }
 }

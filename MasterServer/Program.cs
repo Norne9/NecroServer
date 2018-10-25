@@ -192,6 +192,15 @@ namespace MasterServer
                             var resp = await userBase.RestoreUser(req);
                             response.WriteJson(resp);
                         });
+
+                        //Both
+
+                        //ReqUnits
+                        r.MapGet("units", async (request, response, routeData) =>
+                        {
+                            var resp = masterData.GetUnits();
+                            response.WriteJson(resp);
+                        });
                     });
                 })
                 .Build();
