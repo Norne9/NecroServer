@@ -10,6 +10,7 @@ namespace Game
     {
         public Vector2 Position { get; set; }
         public float Radius { get; set; }
+        public byte Mesh { get; set; } = 0;
 
         private bool CheckIntersect(OcTree[] trees)
         {
@@ -59,6 +60,6 @@ namespace Game
         }
 
         public ObstacleInfo GetObstacleInfo() =>
-            new ObstacleInfo() { PosX = Position.X, PosY = Position.Y, Scale = Radius };
+            new ObstacleInfo() { PosX = Position.X, PosY = Position.Y, Scale = Radius, Mesh = Mesh };
     }
 }

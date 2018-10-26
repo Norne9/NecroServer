@@ -27,6 +27,8 @@ namespace Game
         public Dictionary<byte, byte> UnitSkins { get; set; } = new Dictionary<byte, byte>();
         public readonly PlayerStatus PlayerStatus = new PlayerStatus();
 
+        public ClientInput ViewZone { get; private set; } = new ClientInput();
+
         public Vector2 SmallInput { get; private set; } = new Vector2(0, 1);
         private Vector2 _inputMove = new Vector2(0, 0);
         private bool _inputRise = false;
@@ -57,12 +59,13 @@ namespace Game
             GameMath.MathF.Clamp((_config.RiseCooldown + _riseCount * _config.RiseAddCooldown) - (float)(DateTime.Now - _lastRise).TotalSeconds,
                 0f, (_config.RiseCooldown + _riseCount * _config.RiseAddCooldown));
 
-        public void SetInput(Vector2 input, bool rise)
+        public void SetInput(ClientInput input)
         {
-            _inputMove = input;
+            ViewZone = input;
+            _inputMove = new Vector2(input.MoveX, input.MoveY);
             if (_inputMove.SqrLength() > _config.InputDeadzone)
                 SmallInput = _inputMove;
-            _inputRise = rise;
+            _inputRise = input.Rise;
         }
 
         private void NeutrallUpdate(World world)

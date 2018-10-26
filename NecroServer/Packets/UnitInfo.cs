@@ -17,6 +17,7 @@ namespace Packets
         public bool Alive { get; set; }
         public bool HasExp { get; set; }
         public bool Upgrade { get; set; }
+        public bool CustomSize { get; set; }
 
         public byte Health { get; set; }
         public byte Rot { get; set; }
@@ -24,6 +25,7 @@ namespace Packets
         public ushort Target { get; set; }
         public byte Exp { get; set; }
         public byte UnitSkin { get; set; }
+        public byte UnitSize { get; set; }
 
         public void Serialize(NetDataWriter writer)
         {
@@ -39,7 +41,8 @@ namespace Packets
                 HasHealth,
                 Alive,
                 HasExp,
-                Upgrade
+                Upgrade,
+                CustomSize
             ));
 
             if (Alive && HasHealth) writer.Put(Health);
@@ -48,6 +51,7 @@ namespace Packets
             if (Attack)             writer.Put(Target);
             if (HasExp)             writer.Put(Exp);
             if (Upgrade)            writer.Put(UnitSkin);
+            if (CustomSize)         writer.Put(UnitSize);
         }
 
         public void Deserialize(NetDataReader reader)
@@ -65,6 +69,7 @@ namespace Packets
             Alive = bdata[4];
             HasExp = bdata[5];
             Upgrade = bdata[6];
+            CustomSize = bdata[7];
 
             if (Alive && HasHealth)
                 Health = reader.GetByte();
@@ -78,6 +83,8 @@ namespace Packets
                 Exp = reader.GetByte();
             if (Upgrade)
                 UnitSkin = reader.GetByte();
+            if (CustomSize)
+                UnitSize = reader.GetByte();
         }
 
         private static byte BoolToByte(params bool[] args)

@@ -228,8 +228,10 @@ namespace NecroServer
                         {
                             if (player.IsAlive) //Send world frame
                             {
-                                var packet = _netSerializer.Serialize(_world.GetServerFrame(player));
-                                _peers[netId].Send(packet, SendOptions.Unreliable);
+                                var data = _world.GetServerData(player);
+                                _peers[netId].Send(_netSerializer.Serialize(data.ServerFrame), SendOptions.Unreliable);
+                                foreach (var uFrame in data.UnitFrame)
+                                    _peers[netId].Send(_netSerializer.Serialize(uFrame), SendOptions.Unreliable);
                             }
                             else //Send end packet
                             {

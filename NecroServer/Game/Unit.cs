@@ -58,8 +58,12 @@ namespace Game
 
         public UnitInfo GetUnitInfo(World world, Player player)
         {
+            const byte DefaultRadius = (byte)(0.5f / 10f * byte.MaxValue);
+
+            var unitRadius = (byte)(Radius / 10f * byte.MaxValue);
             var playerOwned = Owner == player;
             var visualEffect = Owner?.UnitsEffect?.VisualEffect ?? Effect.GetVisual(_unitEffects);
+
             return new UnitInfo()
             {
                 UnitId = UnitId,
@@ -74,6 +78,7 @@ namespace Game
                 Alive = Health > 0,
                 HasExp = playerOwned && !Upgraded,
                 Upgrade = Upgraded,
+                CustomSize = unitRadius != DefaultRadius,
 
                 Health = (byte)(Health / CurrentStats.MaxHealth * byte.MaxValue),
                 Rot = (byte)((_rotation > 0 ? _rotation : _rotation + GameMath.MathF.PI * 2f) / GameMath.MathF.PI / 2f * byte.MaxValue),
@@ -81,6 +86,7 @@ namespace Game
                 Target = _myTarget?.UnitId ?? UnitId,
                 Exp = (byte)(Kills / CurrentStats.KillsToUpgrade * byte.MaxValue),
                 UnitSkin = UnitSkin,
+                UnitSize = unitRadius,
             };
         }
 

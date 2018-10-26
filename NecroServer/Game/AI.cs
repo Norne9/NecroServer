@@ -49,7 +49,7 @@ namespace Game
         {
             if (player.IsNeutrall) return;
 
-            var nearUnits = world.OverlapUnits(player.AvgPosition, config.ViewRange);
+            var nearUnits = world.OverlapUnits(player.AvgPosition, config.MaxViewRange / 2f);
             var enemyUnits = world.OverlapUnits(player.AvgPosition, player.Units.FirstOrDefault()?.CurrentStats.ViewRadius ?? 1f)
                 .Where((u) => u.Owner != null && u.Owner != player);
             var enemyCount = enemyUnits.Select((u) => u.Owner?.Units?.Count ?? 0).DefaultIfEmpty(0).Max();
@@ -83,7 +83,12 @@ namespace Game
             else if (fight)
                 inputDir = Vector2.Empty;
 
-            player.SetInput(inputDir, rise);
+            player.SetInput(new Packets.ClientInput()
+            {
+                MoveX = inputDir.X,
+                MoveY = inputDir.Y,
+                Rise = rise
+            });
         }
     }
 }
