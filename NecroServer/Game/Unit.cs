@@ -74,7 +74,7 @@ namespace Game
                 Attack = AttackAnimation,
                 PlayerOwned = playerOwned,
                 HasEffect = visualEffect != VisualEffect.None,
-                HasHealth = playerOwned && Health > 0,
+                HasHealth = (playerOwned || (Owner?.IsNeutrall ?? false)) && Health > 0,
                 Alive = Health > 0,
                 HasExp = playerOwned && !Upgraded,
                 Upgrade = Upgraded,
