@@ -71,14 +71,14 @@ namespace MasterServer
         public void DebugServers()
         {
             var allServers = Servers.Where((s) => (DateTime.Now - s.LastData).TotalSeconds < Config.ServerTime)
-                .GroupBy((s) => s.GameMode).ToDictionary(g => g.Key, g => g.ToList());
+                .GroupBy((s) => $"mode{s.GameMode}@{s.Version}").ToDictionary(g => g.Key, g => g.ToList());
             var sb = new StringBuilder();
             sb.AppendLine("DEBUG server modes");
             foreach (var mode in allServers.Keys)
             {
                 var onlinePlayers = allServers[mode].Select((s) => s.ConnectedPlayers).Sum();
                 var maxPlayers = allServers[mode].Select((s) => s.TotalPlayers).Sum();
-                var playServers = allServers[mode].Where((s) => !s.InLobby).Count();
+                var playServers = allServers[mode].Where((s) => s.ConnectedPlayers > 0).Count();
                 sb.AppendLine($"[{mode}] players {onlinePlayers}/{maxPlayers}\tservers {playServers}/{allServers[mode].Count()}");
             }
             Logger.Log(sb.ToString());
