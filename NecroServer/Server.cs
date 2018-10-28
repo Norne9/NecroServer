@@ -156,7 +156,17 @@ namespace NecroServer
 
         private void OnClientInput(ClientInput input, NetPeer peer)
         {
-            _world.SetInput(peer.GetUId(), input);
+            _world.SetInput(peer.GetUId(), new ClientInput()
+            {
+                MaxX = input.MaxX,
+                MaxY = input.MaxY,
+                MinX = input.MinX,
+                MinY = input.MinY,
+                MoveX = input.MoveX,
+                MoveY = input.MoveY,
+                Rise = input.Rise,
+                ViewRange = input.ViewRange
+            });
         }
 
         private void World_OnGameEnd()
@@ -229,9 +239,10 @@ namespace NecroServer
                             if (player.IsAlive) //Send world frame
                             {
                                 var data = _world.GetServerData(player);
-                                _peers[netId].Send(_netSerializer.Serialize(data.ServerFrame), SendOptions.Unreliable);
+                                var peer = _peers[netId];
+                                peer.Send(_netSerializer.Serialize(data.ServerFrame), SendOptions.Unreliable);
                                 foreach (var uFrame in data.UnitFrame)
-                                    _peers[netId].Send(_netSerializer.Serialize(uFrame), SendOptions.Unreliable);
+                                    peer.Send(_netSerializer.Serialize(uFrame), SendOptions.Unreliable);
                             }
                             else //Send end packet
                             {

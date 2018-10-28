@@ -107,7 +107,7 @@ namespace LiteNetLib.Utils
 			_hasher = hasher;
 			_cache = new Dictionary<ulong, StructInfo>();
 			_registeredCustomTypes = new Dictionary<Type, CustomType>();
-			_writer = new NetDataWriter();
+			_writer = new NetDataWriter(true, 512);
 		}
 
 		private bool RegisterCustomTypeInternal<T>(Func<T> constructor) where T : INetSerializable
