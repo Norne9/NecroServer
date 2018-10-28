@@ -194,11 +194,10 @@ namespace MasterServer
 
         public int UpdateUser(ReqSendStatus status)
         {
-            LastGame = DateTime.Now;
-
             double moneyEarn = 0;
             if (status.GameMode == 0)
             {
+                LastGame = DateTime.Now;
                 if (status.Place == 1)
                     WinCount++;
                 TotalAliveTime += status.AliveTime;

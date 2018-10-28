@@ -8,6 +8,7 @@ namespace MasterServer
     public class TextMessage
     {
         public int Lang { get; set; } = 0;
+        public string Version { get; set; } = "";
         public string Message { get; set; } = "";
     }
 }

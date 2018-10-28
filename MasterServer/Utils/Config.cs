@@ -18,8 +18,8 @@ namespace MasterServer
         public float LeaderboardTime { get; set; } = 60f * 60f * 24f * 3f;
         public float ServerTime { get; set; } = 3f;
         public float DebugTime { get; set; } = 15f * 60f;
-        public float WatchAdTime { get; set; } = 10f * 60f;
-        public float MoneyForAd { get; set; } = 5f;
+        public float WatchAdTime { get; set; } = 5f * 60f;
+        public float MoneyForAd { get; set; } = 8f;
         public float MoneyForKill { get; set; } = 0.1f;
 
         public int LastPlace { get; set; } = 30;

@@ -19,13 +19,13 @@ namespace NecroServer
             var additionalArgs = await masterClient.RequestConfig();
             config.AppendArgs(additionalArgs.Args.ToArray());
 
-            //try
-            //{
+            try
+            {
                 var server = new Server(config, masterClient);
                 await server.Run();
-            //}
-            //catch (Exception e)
-            //{ Logger.Log($"SERVER ERROR: {e.ToString()}", true); }
+            }
+            catch (Exception e)
+            { Logger.Log($"SERVER ERROR: {e.ToString()}", true); }
 
             await Task.Delay(3000);
             Logger.Stop();

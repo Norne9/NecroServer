@@ -7,5 +7,6 @@ namespace MasterReqResp
     public class ReqMessages
     {
         public int Lang { get; set; } = 0;
+        public string Version { get; set; } = "";
     }
 }

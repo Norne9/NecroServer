@@ -86,10 +86,12 @@ namespace MasterServer
         public RespMessages GetMessages(ReqMessages req)
         {
             const int DefaultLang = 10;
+            if (string.IsNullOrEmpty(req.Version))
+                req.Version = "Release_v0.2";
 
-            var messages = _messages.Where((m) => m.Lang == req.Lang).Select((m) => m.Message).ToList();
+            var messages = _messages.Where((m) => m.Lang == req.Lang && m.Version == req.Version).Select((m) => m.Message).ToList();
             if (messages.Count == 0)
-                messages = _messages.Where((m) => m.Lang == DefaultLang).Select((m) => m.Message).ToList();
+                messages = _messages.Where((m) => m.Lang == DefaultLang && m.Version == req.Version).Select((m) => m.Message).ToList();
             return new RespMessages() { Messages = messages };
         }
     }
