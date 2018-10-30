@@ -52,6 +52,7 @@ namespace NecroServer
             _netSerializer.SubscribeReusable<ClientConnection, NetPeer>(OnClientConnection);
             _netSerializer.SubscribeReusable<ClientInput, NetPeer>(OnClientInput);
             _netSerializer.SubscribeReusable<ClientSpawn, NetPeer>(OnClientSpawn);
+            _netSerializer.SubscribeReusable<ClientLeave, NetPeer>(OnClentLeave);
 
             _world = new World(_config, _gameMode);
             _world.OnGameEnd += World_OnGameEnd;
@@ -167,6 +168,11 @@ namespace NecroServer
                 Rise = input.Rise,
                 ViewRange = input.ViewRange
             });
+        }
+
+        private void OnClentLeave(ClientLeave leave, NetPeer peer)
+        {
+            _world.RemovePlayer(peer.GetUId(), false);
         }
 
         private void World_OnGameEnd()

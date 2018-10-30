@@ -43,13 +43,17 @@ namespace Game
                 _players.Add(player.NetworkId, player);
 
             var unit = RandomUnit();
+            if (unit == null) {
+                Logger.Log("GAME error - no more units", true);
+                return;
+            }
             unit.Rise(player);
             if (randomPlace)
                 unit.Position = GetPointInCircle(ZoneRadius);
             if (player.DoubleUnits)
             {
                 for (int i = 0; i < _config.AdditionalUnitCount; i++)
-                    NearUnit(unit).Rise(player);
+                    NearUnit(unit)?.Rise(player);
 
                 var poses = UnitPosition.GetPositions(player.Units.Count);
                 var avgPosition = new Vector2(0, 0);
@@ -86,10 +90,11 @@ namespace Game
         private Unit RandomUnit()
         {
             var freeUnits = _units.Where((u) => u.Owner == null);
+            if (!freeUnits.Any()) return null;
             return freeUnits.ElementAt(GameMath.MathF.RandomInt(0, freeUnits.Count()));
         }
         private Unit NearUnit(Unit unit) =>
-            _units.Where((u) => u.Owner == null).OrderBy((u) => (u.Position - unit.Position).SqrLength()).First();
+            _units.Where((u) => u.Owner == null).OrderBy((u) => (u.Position - unit.Position).SqrLength()).FirstOrDefault();
 
         private void AddNeutrallPlayer()
         {

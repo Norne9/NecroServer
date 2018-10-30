@@ -11,7 +11,7 @@ namespace Game
 {
     public partial class World
     {
-        public void RemovePlayer(int networkId)
+        public void RemovePlayer(int networkId, bool kick = true)
         {
             if (_players.ContainsKey(networkId))
             {
@@ -24,7 +24,8 @@ namespace Game
                     player.PlayerStatus.Place = _config.MaxPlayers;
                     OnPlayerDead?.Invoke(player.UserId, player.PlayerStatus);
                 }
-                _players.Remove(networkId);
+                if (kick)
+                    _players.Remove(networkId);
             }
         }
 
@@ -36,7 +37,7 @@ namespace Game
         }
 
         public int GetAvaliablePlaces() =>
-            _units.Where((u) => !u.IsAlive).Count() / (1 + _config.AdditionalUnitCount);
+            Math.Max(_units.Where((u) => !u.IsAlive).Count() - 5, 0) / (1 + _config.AdditionalUnitCount);
 
         public (ServerFrame ServerFrame, List<UnitFrame> UnitFrame) GetServerData(Player player)
         {
