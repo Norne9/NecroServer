@@ -18,7 +18,8 @@ namespace MasterServer
 
         public DateTime LastGame { get; set; } = DateTime.Now.AddYears(-1);
 
-        public Queue<int> GamePlaces { get; set; } = new Queue<int>();
+        //public Queue<int> GamePlaces { get; set; } = new Queue<int>();
+        public List<(DateTime time, int place)> GamePlaces { get; set; } = new List<(DateTime time, int place)>();
         public double Rating { get; set; } = 0;
         public int WorldPlace { get; set; } = 0;
 
@@ -61,9 +62,7 @@ namespace MasterServer
 
                 int count = br.ReadInt32();
                 for (int i = 0; i < count; i++)
-                    GamePlaces.Enqueue(br.ReadInt32());
-                while (GamePlaces.Count < RatingGameCount)
-                    GamePlaces.Enqueue(_config.LastPlace);
+                    GamePlaces.Add((DateTime.Now.AddSeconds(_config.LeaderboardTime * -0.9), br.ReadInt32()));
 
                 WinCount = br.ReadInt32();
                 GameCount = br.ReadInt32();
@@ -100,9 +99,18 @@ namespace MasterServer
                 }
                 catch (Exception)
                 { LastAdWatch = DateTime.Now.AddYears(-1); }
+
+                try //Version 4
+                {
+                    count = br.ReadInt32();
+                    for (int i = 0; i < count; i++)
+                        GamePlaces.Add((DateTime.FromBinary(br.ReadInt64()), br.ReadInt32()));
+                }
+                catch (Exception)
+                { }
             }
             WorldPlace = 0;
-            Rating = GamePlaces.Select((p) => GetScore(p)).Sum();
+            Rating = GamePlaces.Select((p) => GetScore(p.place)).Sum();
         }
         public byte[] SaveUser()
         {
@@ -116,9 +124,10 @@ namespace MasterServer
 
                 bw.Write(LastGame.Ticks);
 
-                bw.Write(GamePlaces.Count);
-                foreach (var place in GamePlaces)
-                    bw.Write(place);
+                bw.Write(0);
+                //bw.Write(GamePlaces.Count);
+                //foreach (var place in GamePlaces)
+                //    bw.Write(place);
 
                 bw.Write(WinCount);
                 bw.Write(GameCount);
@@ -147,6 +156,15 @@ namespace MasterServer
 
                 //Version 3
                 bw.Write(LastAdWatch.Ticks);
+
+                //Version 4
+                GamePlaces.RemoveAll((p) => (DateTime.Now - p.time).TotalSeconds > _config.LeaderboardTime);
+                bw.Write(GamePlaces.Count);
+                foreach (var (date, place) in GamePlaces)
+                {
+                    bw.Write(date.ToBinary());
+                    bw.Write(place);
+                }
 
                 return ms.ToArray();
             }
@@ -205,19 +223,21 @@ namespace MasterServer
                 TotalDamageReceive += status.DamageReceive;
                 TotalUnitKill += status.UnitKill;
                 TotalUnitRise += status.UnitRise;
-                GamePlaces.Enqueue(status.Place);
-                AvgPlace = GamePlaces.Average();
+
+                GamePlaces.Add((DateTime.Now, status.Place));
+                GamePlaces.RemoveAll((p) => (DateTime.Now - p.time).TotalSeconds > _config.LeaderboardTime);
+
+                if (GamePlaces.Count > 0)
+                    AvgPlace = GamePlaces.Select((p) => p.place).Average();
+                else
+                    AvgPlace = 0;
+
                 AvgAliveTime = (AvgAliveTime * GameCount + status.AliveTime) / (GameCount + 1);
                 AvgDamageDeal = (AvgDamageDeal * GameCount + status.DamageDeal) / (GameCount + 1);
                 AvgDamageReceive = (AvgDamageReceive * GameCount + status.DamageReceive) / (GameCount + 1);
                 AvgUnitKill = (AvgUnitKill * GameCount + status.UnitKill) / (GameCount + 1);
                 AvgUnitRise = (AvgUnitRise * GameCount + status.UnitRise) / (GameCount + 1);
                 GameCount++;
-
-                while (GamePlaces.Count < RatingGameCount)
-                    GamePlaces.Enqueue(_config.LastPlace);
-                while (GamePlaces.Count > RatingGameCount)
-                    GamePlaces.Dequeue();
 
                 moneyEarn = GetMoney(status.Place);
             }
@@ -226,7 +246,7 @@ namespace MasterServer
                 moneyEarn = status.UnitKill * _config.MoneyForKill;
             }
 
-            Rating = GamePlaces.Select((p) => GetScore(p)).Sum();
+            Rating = GamePlaces.Select((p) => GetScore(p.place)).Sum();
             Money += moneyEarn;
             return (int)moneyEarn;
         }
