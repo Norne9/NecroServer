@@ -59,6 +59,8 @@ namespace Game
                 for (int i = 0; i < player.Units.Count; i++)
                     player.Units[i].Position = targetPosition + poses[i];
             }
+
+            _unitsTree = new OcTree(_worldZone, _units, true);
         }
         public bool AppendAiPlayers(int count)
         {
