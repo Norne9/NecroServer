@@ -19,12 +19,12 @@ namespace NecroServer
         private bool _work = true;
         private readonly Config _config;
         private readonly MasterClient _masterClient;
-        private NetSerializer _netSerializer;
+        private readonly NetSerializer _netSerializer;
         
-        private World _world;
-        private Dictionary<int, RespClient> _waitingPlayers = new Dictionary<int, RespClient>();
-        private Dictionary<int, Player> _players = new Dictionary<int, Player>();
-        private Dictionary<int, NetPeer> _peers = new Dictionary<int, NetPeer>();
+        private readonly World _world;
+        private readonly Dictionary<int, RespClient> _waitingPlayers = new Dictionary<int, RespClient>();
+        private readonly Dictionary<int, Player> _players = new Dictionary<int, Player>();
+        private readonly Dictionary<int, NetPeer> _peers = new Dictionary<int, NetPeer>();
 
         private ServerState _serverState = ServerState.Started;
         private DateTime _startTime = DateTime.Now;
@@ -41,9 +41,13 @@ namespace NecroServer
             _config = config;
             _gameMode = (GameMode)_config.GameMode;
 
+            _world = new World(_config, _gameMode);
+            _world.OnGameEnd += World_OnGameEnd;
+            _world.OnPlayerDead += World_OnPlayerDead;
+
             _server = new NetManager(this, 100 + _config.MaxPlayers, _config.ConnectionKey)
             {
-                UpdateTime = _config.UpdateDelay / 2,
+                UpdateTime = _config.UpdateDelay / 3,
             };
 
             Logger.Log($"SERVER register packets");
@@ -53,10 +57,6 @@ namespace NecroServer
             _netSerializer.SubscribeReusable<ClientInput, NetPeer>(OnClientInput);
             _netSerializer.SubscribeReusable<ClientSpawn, NetPeer>(OnClientSpawn);
             _netSerializer.SubscribeReusable<ClientLeave, NetPeer>(OnClentLeave);
-
-            _world = new World(_config, _gameMode);
-            _world.OnGameEnd += World_OnGameEnd;
-            _world.OnPlayerDead += World_OnPlayerDead;
 
             Logger.Log($"SERVER created");
         }
@@ -150,7 +150,7 @@ namespace NecroServer
             if (_players.Count == 1)
                 StartGame();
             else
-                _world.AddPlayer(player, true);
+                _world.AddPlayer(player);
 
             SendPlayersInfo();
         }
@@ -242,10 +242,10 @@ namespace NecroServer
                             AI.MakeStep(_config, player, _world);
                         else if (_peers.ContainsKey(netId)) //Real & connected player
                         {
+                            var peer = _peers[netId];
                             if (player.IsAlive) //Send world frame
                             {
                                 var data = _world.GetServerData(player);
-                                var peer = _peers[netId];
                                 peer.Send(_netSerializer.Serialize(data.ServerFrame), SendOptions.Unreliable);
                                 foreach (var uFrame in data.UnitFrame)
                                     peer.Send(_netSerializer.Serialize(uFrame), SendOptions.Unreliable);
@@ -253,7 +253,7 @@ namespace NecroServer
                             else //Send end packet
                             {
                                 var packet = _netSerializer.Serialize(_world.GetServerEnd(player));
-                                _peers[netId].Send(packet, SendOptions.Unreliable);
+                                peer.Send(packet, SendOptions.Unreliable);
                             }
                         }
                         else
@@ -261,7 +261,7 @@ namespace NecroServer
                     }
 
                     //Append ai players
-                    if (_gameMode == GameMode.Free && _world.AppendAiPlayers(_config.MaxAiPlayers, true))
+                    if (_gameMode == GameMode.Free && _world.AppendAiPlayers(_config.MaxAiPlayers))
                         SendPlayersInfo();
                 }
 

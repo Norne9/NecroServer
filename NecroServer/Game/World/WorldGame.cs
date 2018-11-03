@@ -37,7 +37,7 @@ namespace Game
             Logger.Log($"GAME started");
         }
 
-        public void AddPlayer(Player player, bool randomPlace = false)
+        public void AddPlayer(Player player)
         {
             if (!_players.ContainsKey(player.NetworkId))
                 _players.Add(player.NetworkId, player);
@@ -48,30 +48,19 @@ namespace Game
                 return;
             }
             unit.Rise(player);
-            if (randomPlace)
-                unit.Position = GetPointInCircle(ZoneRadius);
+            unit.Position = FindSpawnPoint();
             if (player.DoubleUnits)
             {
                 for (int i = 0; i < _config.AdditionalUnitCount; i++)
                     NearUnit(unit)?.Rise(player);
 
                 var poses = UnitPosition.GetPositions(player.Units.Count);
-                var avgPosition = new Vector2(0, 0);
-
-                if (randomPlace)
-                    avgPosition = GetPointInCircle(ZoneRadius);
-                else
-                {
-                    foreach (var unit1 in player.Units)
-                        avgPosition += unit1.Position;
-                    avgPosition /= player.Units.Count;
-                }
-
+                var targetPosition = FindSpawnPoint();
                 for (int i = 0; i < player.Units.Count; i++)
-                    player.Units[i].Position = avgPosition + poses[i];
+                    player.Units[i].Position = targetPosition + poses[i];
             }
         }
-        public bool AppendAiPlayers(int count, bool randomPlace = false)
+        public bool AppendAiPlayers(int count)
         {
             var result = false;
             var toRemove = new List<int>(_players.Values.Where((u) => u.IsAI && !u.IsAlive).Select((u) => u.NetworkId));
@@ -82,11 +71,24 @@ namespace Game
             while (_players.Count < count + 1)
             {
                 var aiPlayer = AI.GetAiPlayer(_config);
-                AddPlayer(aiPlayer, randomPlace);
+                AddPlayer(aiPlayer);
                 result = true;
             }
             return result;
         }
+
+        private Vector2 FindSpawnPoint()
+        {
+            Vector2 spawnPoint = Vector2.Empty;
+            for (int i = 0; i < byte.MaxValue; i++)
+            {
+                spawnPoint = GetPointInCircle(ZoneRadius);
+                if (_unitsTree.Overlap<Unit>(spawnPoint, _config.RiseRadius).Count == 0)
+                    return spawnPoint;
+            }
+            return spawnPoint;
+        }
+
         private Unit RandomUnit()
         {
             var freeUnits = _units.Where((u) => u.Owner == null);

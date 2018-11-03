@@ -50,38 +50,36 @@ namespace Game
             if (player.IsNeutrall) return;
 
             var nearUnits = world.OverlapUnits(player.AvgPosition, config.MaxViewRange / 2f);
+            var allEnemy = nearUnits.Where((u) => u.Owner != null && u.Owner != player && u.UnitStats.UnitVisible);
+            var enemyCount = allEnemy.Count();
             var enemyUnits = world.OverlapUnits(player.AvgPosition, player.Units.FirstOrDefault()?.CurrentStats.ViewRadius ?? 1f)
-                .Where((u) => u.Owner != null && u.Owner != player);
-            var enemyCount = enemyUnits.Select((u) => u.Owner?.Units?.Count ?? 0).DefaultIfEmpty(0).Max();
+                .Where((u) => u.Owner != null && u.Owner != player && u.UnitStats.UnitVisible);
             var neutralUnits = world.OverlapUnits(player.AvgPosition, config.RiseRadius).Where((u) => u.Owner == null);
 
-            bool fight = false;
-            if (config.GameMode != (int)GameMode.Royale)
-                fight = ((player.Units.Count > enemyCount) && enemyCount > 0) || enemyUnits.Where((u) => !u.Owner.IsAI).Any();
-            else
-                fight = ((player.Units.Count >= enemyCount - 2) && enemyCount > 0) || enemyUnits.Where((u) => !u.Owner.IsAI).Any();
+            bool fight = enemyUnits.Any();
 
             bool rise = neutralUnits.Count() > 0;
             bool goCenter = !fight && player.AvgPosition.SqrLength() * 1.3f > world.ZoneRadius * world.ZoneRadius;
 
-            var rndDir = RandomPosition.GetRandomPosition(byte.MaxValue + player.NetworkId);
-            Vector2 inputDir = rndDir;
+            Vector2 inputDir = RandomPosition.GetRandomPosition(byte.MaxValue + player.NetworkId);
+
             var nearUnit = nearUnits.Where((u) => u.Owner == null).FirstOrDefault();
-            if (nearUnit != null && config.GameMode == (int)GameMode.Royale)
-                inputDir = nearUnit.Position - player.AvgPosition;
-            if (player.GetCooldown() > 0f) inputDir = rndDir;
-            if (enemyUnits.Any())
+            if (nearUnit != null) inputDir = nearUnit.Position - player.AvgPosition;
+
+            if (fight)
+                inputDir = Vector2.Empty;
+            else if (goCenter)
+                inputDir = Vector2.Empty - player.AvgPosition;
+            else if (player.Units.Count < enemyCount)
             {
                 inputDir = Vector2.Empty;
-                foreach (var u in enemyUnits)
+                foreach (var u in allEnemy)
                     inputDir += u.Position;
-                inputDir /= enemyUnits.Count();
+                inputDir /= allEnemy.Count();
                 inputDir = player.AvgPosition - inputDir;
             }
-            if (goCenter)
-                inputDir = Vector2.Empty - player.AvgPosition;
-            else if (fight)
-                inputDir = Vector2.Empty;
+            else if (enemyCount >= 1)
+                inputDir = allEnemy.First().Position - player.AvgPosition;
 
             player.SetInput(new Packets.ClientInput()
             {
