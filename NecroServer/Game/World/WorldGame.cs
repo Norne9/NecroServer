@@ -54,10 +54,8 @@ namespace Game
                 for (int i = 0; i < _config.AdditionalUnitCount; i++)
                     NearUnit(unit)?.Rise(player);
 
-                var poses = UnitPosition.GetPositions(player.Units.Count);
-                var targetPosition = FindSpawnPoint();
                 for (int i = 0; i < player.Units.Count; i++)
-                    player.Units[i].Position = targetPosition + poses[i];
+                    player.Units[i].Position = unit.Position;
             }
 
             _unitsTree = new OcTree(_worldZone, _units, true);

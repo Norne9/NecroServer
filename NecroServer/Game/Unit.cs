@@ -293,7 +293,7 @@ namespace Game
             Position = newPosition;
 
             if (CheckIntersect(trees, out Vector2 vec, out float pushPower))
-                Position = CalcNewPos(Position + (Position - vec), CurrentStats.MoveSpeed * (_attackCommand ? 2.0f : pushPower), dt);
+                Position = CalcNewPos(Position + (Position - vec), CurrentStats.MoveSpeed * ((Owner?.InFight ?? false) ? 2.0f : pushPower), dt);
         }
         private bool CheckIntersect(OcTree[] trees, out Vector2 result, out float pushPower)
         {

@@ -28,6 +28,7 @@ namespace Game
         public readonly PlayerStatus PlayerStatus = new PlayerStatus();
 
         public ClientInput ViewZone { get; private set; } = new ClientInput();
+        public bool InFight { get; private set; }
 
         public Vector2 SmallInput { get; private set; } = new Vector2(0, 1);
         private Vector2 _inputMove = new Vector2(0, 0);
@@ -122,61 +123,52 @@ namespace Game
 
             var attack = _inputMove.SqrLength() < 0.001f;
             var move = _inputMove.SqrLength() > _config.InputDeadzone;
-            CalculatePositions(move);
+
+            Units.Sort((u1, u2) =>
+            {
+                if (Math.Abs(u1.Radius - u2.Radius) > 0.01f)
+                    return u2.Radius.CompareTo(u1.Radius);
+                if (Math.Abs(u1.UnitStats.AttackRange - u2.UnitStats.AttackRange) > 0.1f)
+                    return u1.UnitStats.AttackRange.CompareTo(u2.UnitStats.AttackRange);
+                return u2.UnitStats.MaxHealth.CompareTo(u1.UnitStats.MaxHealth);
+            });
+            var poses = ProcessPositions(UnitPosition.GetPositions(Units.Select((u) => u.Radius).ToArray()),
+                SmallInput, move);
 
             //process units
             for (int i = Units.Count - 1; i >= 0; i--)
             {
                 //Update unit
-                Units[i].Update(world, Units[i].TargetPos.move, attack);
+                Units[i].Update(world, poses[i], attack);
             }
 
             //Update avg position
+            InFight = false;
             AvgPosition = new Vector2(0, 0);
             foreach (var unit in Units)
+            {
                 AvgPosition += unit.Position;
+                InFight |= unit.AttackAnimation;
+            }
             AvgPosition /= Units.Count;
         }
 
-        private void CalculatePositions(bool move)
+        private Vector2[] ProcessPositions(Vector2[] positions, Vector2 dir, bool move)
         {
-            //get input for units
-            var poses = UnitPosition.GetPositions(Units.Count);
-            var movePoses = ProcessPositions(poses, SmallInput, move);
-
-            var sortedUnits = Units.OrderBy((u) => u.BestDist);
-            foreach (var unit in sortedUnits)
-            {
-                unit.BestDist = float.MaxValue;
-                foreach (var pos in movePoses)
-                {
-                    var dist = (unit.Position - pos.stay).SqrLength();
-                    if (dist < unit.BestDist)
-                    {
-                        unit.BestDist = dist;
-                        unit.TargetPos = pos;
-                    }
-                }
-                movePoses.Remove(unit.TargetPos);
-            }
-        }
-
-        private List<(Vector2 stay, Vector2 move)> ProcessPositions(List<Vector2> positions, Vector2 dir, bool move)
-        {
-            var result = new List<(Vector2 stay, Vector2 move)>();
+            var result = new Vector2[positions.Length];
             if (dir.SqrLength() > 1f)
                 dir = dir.Normalize();
             float rot = System.MathF.Atan2(-dir.X, dir.Y);
             float cs = System.MathF.Cos(rot);
             float sn = System.MathF.Sin(rot);
-            for (int i = 0; i < positions.Count; i++)
+            for (int i = 0; i < positions.Length; i++)
             {
                 float ox = positions[i].X;
                 float oy = positions[i].Y;
                 float x = ox * cs - oy * sn;
                 float y = ox * sn + oy * cs;
-                positions[i] = AvgPosition + new Vector2(x, y);
-                result.Add((positions[i], move ? positions[i] + dir * 0.3f : positions[i]));
+                var pos = AvgPosition + new Vector2(x, y);
+                result[i] = move ? pos + dir * 0.3f : pos;
             }
             return result;
         }

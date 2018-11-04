@@ -37,6 +37,9 @@ namespace Game
             Logger.Log("WORLD creating rune tree");
             _runesTree = new OcTree(_worldZone, _runes, true);
 
+            Logger.Log("WORLD warming chaches");
+            UnitPosition.Warmup();
+
             Logger.Log("WORLD created");
         }
 
