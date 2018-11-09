@@ -11,9 +11,6 @@ namespace Game
 {
     public class Unit : PhysicalObject
     {
-        public (Vector2 stay, Vector2 move) TargetPos;
-        public float BestDist;
-
         public ushort UnitId { get; }
 
         public byte UnitMesh { get; }
@@ -42,6 +39,8 @@ namespace Game
 
         private readonly Config _config;
 
+        private Vector2 _transferPosition;
+
         public Unit(Config config, ushort id, byte mesh, UnitStats stats, bool spawnNeutrall, float radius = 0.5f)
         {
             SpawnNeutrall = spawnNeutrall;
@@ -54,6 +53,7 @@ namespace Game
             CurrentStats = UnitStats = stats;
 
             _rotation = GameMath.MathF.RandomFloat(0f, GameMath.MathF.PI / 2f);
+            _transferPosition = Position;
         }
 
         public UnitInfo GetUnitInfo(World world, Player player)
@@ -64,12 +64,15 @@ namespace Game
             var playerOwned = Owner == player;
             var visualEffect = Owner?.UnitsEffect?.VisualEffect ?? Effect.GetVisual(_unitEffects);
 
+            if (Owner == null || !Owner.InFight)
+                _transferPosition = Position;
+
             return new UnitInfo()
             {
                 UnitId = UnitId,
                 UnitMesh = UnitMesh,
-                PosX = (short)(Position.X / world.WorldScale * short.MaxValue),
-                PosY = (short)(Position.Y / world.WorldScale * short.MaxValue),
+                PosX = (short)(_transferPosition.X / world.WorldScale * short.MaxValue),
+                PosY = (short)(_transferPosition.Y / world.WorldScale * short.MaxValue),
                 
                 Attack = AttackAnimation,
                 PlayerOwned = playerOwned,
@@ -153,15 +156,20 @@ namespace Game
             //Apply damage from zone
             if (Position.SqrLength() > world.ZoneRadius * world.ZoneRadius)
                 TakeDamage(null, _config.ZoneDps * world.DeltaTime);
+            else
+            {
+                //Apply health change
+                if (CurrentStats.HealthPerSecond != 0 && !AttackAnimation)
+                    TakeDamage(this, -CurrentStats.HealthPerSecond * world.DeltaTime);
+            }
+
+            if ((Position - _transferPosition).SqrLength() > 0.1f)
+                _transferPosition = Position;
 
             //Calculate rotation
             if (lookDirection.SqrLength() < 0.001f)
                 lookDirection = CalcLook();
             _rotation = System.MathF.Atan2(lookDirection.X, lookDirection.Y);
-
-            //Apply health change
-            if (CurrentStats.HealthPerSecond != 0 && !AttackAnimation)
-                TakeDamage(this, -CurrentStats.HealthPerSecond * world.DeltaTime);
         }
 
         protected virtual Unit SelectTarget(World world)

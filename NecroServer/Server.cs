@@ -323,12 +323,15 @@ namespace NecroServer
                 {
                     while (_requestQueue.TryDequeue(out Func<Task> action))
                         await action();
-                    await SendInfoToMaster();
                 }
                 catch (Exception e)
                 {
                     Logger.Log($"MASTER error: {e.ToString()}", true);
                 }
+
+                //Collection was modified error - just ignore
+                try { await SendInfoToMaster(); }
+                catch (Exception) {}
             }
         }
         private async Task SendInfoToMaster()
